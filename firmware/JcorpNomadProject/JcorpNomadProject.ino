@@ -1,16 +1,16 @@
 //Jcorp Nomad Project
-#include "Arduino.h"
+#include <Arduino.h>
 #define FF_USE_FASTSEEK 1
 #define SD_FREQ_KHZ 10000         // ✱✱ VERY IMPORTANT SETTING ✱✱
                                   // This controls how fast reads from your SD Card can go, If you have a name brand fancy card you can go faster with better results. Check what your card recomends. 
                                   // 10 000 kHz (10 MHz) = safest 
                                   // 12000 kHz (12 MHz) = good 
                                   // 20000 kHz (20 MHz) = fastest 
-#include "WiFi.h"
-#include "ESPAsyncWebServer.h"
-#include "FS.h"
+#include <WiFi.h>
+#include <ESPAsyncWebServer.h>
+#include <FS.h>
 #include "SD_MMC.h"
-#include "DNSServer.h"
+#include <DNSServer.h>
 #include <ArduinoJson.h>
 #include <map>
 #include "Display_ST7789.h"
@@ -19,7 +19,7 @@
 #include "RGB_lamp.h"
 #include <SPIFFS.h>
 #include <Preferences.h>
-#include "esp_wifi.h"
+#include <esp_wifi.h>
 #include "usb_mode.h"
 #include "boot_mode.h" // custom library for firmware switching
 void launch_usb_mode() {
@@ -2115,4 +2115,10 @@ void RGB_SetMode(uint8_t mode) {
         Set_Color(solidG, solidR, solidB);
     }
 }
+
+
+
+
+
+
 
