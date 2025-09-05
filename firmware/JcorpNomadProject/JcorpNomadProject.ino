@@ -22,6 +22,7 @@
 #include <esp_wifi.h>
 #include "usb_mode.h"
 #include "boot_mode.h"  // custom library for firmware switching
+
 void launch_usb_mode() {
   extern void usb_setup();
   extern void usb_loop();
@@ -34,6 +35,7 @@ void launch_usb_mode() {
     // optionally: delay(0); yield();
   }
 }
+
 #define BOOT_BUTTON_PIN 0
 int screenBrightness = 100;  // 0-100, default full brightness
 void handleConnector(AsyncWebServerRequest *request);
@@ -87,6 +89,7 @@ String urlencode(String str) {
   }
   return encoded;
 }
+
 // Settings Setup:
 bool loadSettings() {
   if (!SD_MMC.exists(SETTINGS_PATH)) {
@@ -119,6 +122,7 @@ bool loadSettings() {
 
   return true;
 }
+
 bool saveSettings() {
   SD_MMC.mkdir("/config");  // Ensure directory exists
 
@@ -195,7 +199,6 @@ bool deleteRecursive(String path) {
   return SD_MMC.rmdir(path);
 }
 
-
 // ───────────────── SD‑recovery globals ───────────────
 volatile bool sdErrorFlag = false;
 unsigned long sdErrorCooldownUntil = 0;
@@ -223,6 +226,7 @@ DNSServer dnsServer;
 AsyncWebServer server(80);  // Web server on port 80
 std::map<AsyncWebServerRequest *, File> activeUploads;
 int connectedClients = 0;
+
 // LED Mode and Color Helper Wrappers
 uint8_t currentLEDMode = 0;  // 0=off, 1=rainbow, 2=solid color
 uint8_t solidR = 0, solidG = 0, solidB = 0;
@@ -237,6 +241,7 @@ extern lv_obj_t *ui_wifi;
 extern lv_obj_t *ui_SDcard;
 bool lastWifiStatus = false;
 bool lastSDStatus = false;
+
 //Globals for SD scan
 unsigned long lastUpdateTime = 0;
 unsigned long lastSDScanTime = 0;
@@ -244,12 +249,14 @@ const unsigned long SD_SCAN_INTERVAL = 60000;  // 60 seconds
 uint64_t cachedUsedBytes = 0;
 uint64_t cachedTotalBytes = 0;
 unsigned long lastScanTime = 0;
+
 // Update the UI with the number of connected users
 void updateUI(int userCount) {
   char buffer[10];
   snprintf(buffer, sizeof(buffer), "%d", userCount);
   lv_label_set_text(ui_userlabel, buffer);
 }
+
 void updateToggleStatus() {
   bool currentWifiStatus = WiFi.softAPIP();
   if (currentWifiStatus != lastWifiStatus) {
@@ -278,6 +285,7 @@ void updateToggleStatus() {
 void opdsWrite(AsyncResponseStream *s, const String &chunk) {
   s->print(chunk);
 }
+
 //(OPDS thing)
 String xmlEscape(const String &in) {  // we already added this
   String out;
@@ -357,26 +365,57 @@ void generateMediaJSON() {
 
   // ─── 4) Movies ───
   jsonFile.println("  \"movies\": [");
+
   File moviesDir = SD_MMC.open("/Movies");
   bool firstMovie = true;
-  std::vector<String> movieExts = { ".mp4", ".mkv", ".avi", ".mov", ".webm", ".m4v", ".wmv", ".flv", ".mpg", ".mpeg", ".ts", ".3gp" };
-  while (File file = moviesDir.openNextFile()) {
-    yield();
-    String fname = String(file.name());
-    String ext = fname.substring(fname.lastIndexOf('.'));
-    ext.toLowerCase();
-    if (!file.isDirectory() && isValidExtension(fname, movieExts)) {
-      if (!firstMovie) jsonFile.println(",");
-      firstMovie = false;
-      String base = getFileBaseName(fname);
-      String cover = SD_MMC.exists("/Movies/" + base + ".jpg") ? "movies/" + base + ".jpg" : "placeholder.jpg";
+  std::vector<String> movieExts = {
+    ".mp4", ".mkv", ".avi", ".mov", ".webm", ".m4v", ".wmv", ".flv",
+    ".mpg", ".mpeg", ".ts", ".3gp"
+  };
 
-      jsonFile.print("    { \"name\": \"" + base + "\", \"cover\": \"" + cover + "\", \"file\": \"Movies/" + base + ext + "\" }");
+  // Safety: moviesDir might fail to open
+  if (moviesDir) {
+    while (true) {
+      File file = moviesDir.openNextFile();
+      if (!file) break;  // no more entries
 
-      logBuf += "- " + fname + "\n";
-      if (++logCount % LOG_UPDATE_INTERVAL == 0) flushLog();
+      if (!file.isDirectory()) {
+        String fname = String(file.name());  // e.g., "MovieName.mp4" or "/Movies/MovieName.mp4"
+        // Determine extension safely
+        int dotPos = fname.lastIndexOf('.');
+        String ext = (dotPos >= 0) ? fname.substring(dotPos) : String("");
+        ext.toLowerCase();
+
+        if (isValidExtension(fname, movieExts)) {
+          // Base name without path and ext
+          String base = getFileBaseName(fname);
+
+          if (!firstMovie) jsonFile.println(",");
+          firstMovie = false;
+
+          // Optional cover beside the movie file (real file on SD)
+          String coverDiskPath = "/Movies/" + base + ".jpg";
+          // URL/path we’ll put in JSON (your UI expects lower-case "movies/" here)
+          String coverJsonPath = SD_MMC.exists(coverDiskPath) ? ("movies/" + base + ".jpg")
+                                                              : "placeholder.jpg";
+
+          jsonFile.print("    { \"name\": \"" + base + "\", "
+                                                       "\"cover\": \""
+                         + coverJsonPath + "\", "
+                                           "\"file\": \"Movies/"
+                         + base + ext + "\" }");
+
+          logBuf += "- " + fname + "\n";
+          if (++logCount % LOG_UPDATE_INTERVAL == 0) flushLog();
+        }
+      }
+
+      file.close();  // close as we go
+      yield();
     }
+    moviesDir.close();
   }
+
   jsonFile.println();
   jsonFile.println("  ],");
   flushLog();
@@ -391,7 +430,9 @@ void generateMediaJSON() {
       if (!firstShow) jsonFile.println(",");
       firstShow = false;
       String showName = String(folder.name());
-      String cover = SD_MMC.exists("/Shows/" + showName + ".jpg") ? "shows/" + showName + ".jpg" : "placeholder.jpg";
+
+      String cover = SD_MMC.exists("/Shows/" + showName + ".jpg") ? "Shows/" + showName + ".jpg" : "placeholder.jpg";
+
 
       jsonFile.println("    {\"name\": \"" + showName + "\", \"cover\": \"" + cover + "\", \"episodes\": [");
 
@@ -419,6 +460,7 @@ void generateMediaJSON() {
       jsonFile.println("    ]}");
     }
   }
+
   jsonFile.println();
   jsonFile.println("  ],");
   flushLog();
@@ -444,6 +486,7 @@ void generateMediaJSON() {
       if (++logCount % LOG_UPDATE_INTERVAL == 0) flushLog();
     }
   }
+
   jsonFile.println();
   jsonFile.println("  ],");
   flushLog();
@@ -462,7 +505,8 @@ void generateMediaJSON() {
       if (!firstMusic) jsonFile.println(",");
       firstMusic = false;
       String base = getFileBaseName(fname);
-      String cover = SD_MMC.exists("/Music/" + base + ".jpg") ? "music/" + base + ".jpg" : "placeholder.jpg";
+
+      String cover = SD_MMC.exists("/Music/" + base + ".jpg") ? "Music/" + base + ".jpg" : "placeholder.jpg";
 
       jsonFile.print("    { \"name\": \"" + base + "\", \"cover\": \"" + cover + "\", \"file\": \"Music/" + base + ext + "\" }");
 
@@ -470,6 +514,7 @@ void generateMediaJSON() {
       if (++logCount % LOG_UPDATE_INTERVAL == 0) flushLog();
     }
   }
+
   jsonFile.println();
   jsonFile.println("  ],");
   flushLog();
@@ -504,7 +549,9 @@ void generateMediaJSON() {
       for (size_t i = 0; i < tracks.size(); ++i) {
         String tname = tracks[i].substring(tracks[i].lastIndexOf('/') + 1);
         String base2 = getFileBaseName(tname);
-        String cover2 = SD_MMC.exists("/Music/" + base2 + ".jpg") ? "music/" + base2 + ".jpg" : "placeholder.jpg";
+
+        String cover2 = SD_MMC.exists("/Music/" + base2 + ".jpg") ? "Music/" + base2 + ".jpg" : "placeholder.jpg";
+
         jsonFile.print("      { \"name\": \"" + base2 + "\", \"cover\": \"" + cover2 + "\", \"file\": \"Music/" + tracks[i] + "\" }");
         if (i < tracks.size() - 1) jsonFile.println(",");
 
@@ -515,6 +562,7 @@ void generateMediaJSON() {
       jsonFile.println("    ]");
     }
   }
+
   jsonFile.println("  },");
   flushLog();
 
@@ -523,6 +571,7 @@ void generateMediaJSON() {
   File galleryDir = SD_MMC.open("/Gallery");
   bool firstGal = true;
   std::vector<String> mediaExts = { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp", ".tiff", ".mp4", ".webm", ".mov", ".avi", ".mkv", ".flv" };
+
   while (File f = galleryDir.openNextFile()) {
     yield();
     String fname = String(f.name());
@@ -538,6 +587,7 @@ void generateMediaJSON() {
       if (++logCount % LOG_UPDATE_INTERVAL == 0) flushLog();
     }
   }
+
   jsonFile.println();
   jsonFile.println("  ],");
   flushLog();
@@ -558,6 +608,7 @@ void generateMediaJSON() {
       if (++logCount % LOG_UPDATE_INTERVAL == 0) flushLog();
     }
   }
+
   jsonFile.println();
   jsonFile.println("  ]");
   flushLog();
@@ -573,7 +624,6 @@ void generateMediaJSON() {
 String absURL(const String &path) {
   return "http://" + WiFi.softAPIP().toString() + path;
 }
-
 
 void handleOPDSRoot(AsyncWebServerRequest *request) {
   AsyncResponseStream *res = request->beginResponseStream(
@@ -613,7 +663,6 @@ void handleOPDSRoot(AsyncWebServerRequest *request) {
   request->send(res);
 }
 
-
 void handleOPDSBooks(AsyncWebServerRequest *request) {
   Serial.println("[OPDS] === handleOPDSBooks() called ===");
   AsyncResponseStream *res =
@@ -624,7 +673,6 @@ void handleOPDSBooks(AsyncWebServerRequest *request) {
   res->addHeader("Pragma", "no-cache");
   res->addHeader("Expires", "0");
   res->addHeader("Surrogate-Control", "no-store");
-
 
   opdsWrite(res, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
                  "<feed xmlns=\"http://www.w3.org/2005/Atom\" "
@@ -672,7 +720,6 @@ void handleOPDSBooks(AsyncWebServerRequest *request) {
 
     Serial.println("[OPDS] Processing book file: " + fn);
 
-
     String base = fn.substring(fn.lastIndexOf('/') + 1);
     base = base.substring(0, base.lastIndexOf('.'));
     String safeTitle = xmlEscape(base);
@@ -707,7 +754,6 @@ void handleOPDSBooks(AsyncWebServerRequest *request) {
     dir.close();
     Serial.println("[OPDS] Closed /Books directory");
   }
-
 
   opdsWrite(res, "</feed>");
   request->send(res);
@@ -820,7 +866,6 @@ void handleRangeRequest(AsyncWebServerRequest *request) {
       }
       return bytesRead;
     });
-
 
   response->addHeader("Accept-Ranges", "bytes");
   response->addHeader("Content-Range", "bytes " + String(startByte) + "-" + String(endByte) + "/" + String(fileSize));
@@ -949,7 +994,6 @@ void handleDelete(AsyncWebServerRequest *request) {
     request->send(500, "application/json", "{\"error\":\"Delete failed\"}");
   }
 }
-
 
 std::map<AsyncWebServerRequest *, String> uploadPaths;
 File uploadFile;
@@ -1084,6 +1128,7 @@ void updateSDBAR() {
     lv_bar_set_value(ui_sdbar, 0, LV_ANIM_OFF);
   }
 }
+
 bool checkGenerateFlagFile() {
   if (SD_MMC.exists("/.generate_flag")) {
     Serial.println("[BOOT] Found /.generate_flag, will generate media.json");
@@ -1092,6 +1137,7 @@ bool checkGenerateFlagFile() {
   }
   return false;
 }
+
 void handleConnector(AsyncWebServerRequest *request) {
   // 1) Get 'dir' from POST body
   String dir = "/";
@@ -1199,6 +1245,7 @@ void sdScanTask(void *pvParameters) {
   updateSDBAR();
   vTaskDelete(NULL);
 }
+
 // ------------- Main Setup -------------------
 void setup() {
   Serial.begin(115200);
@@ -1222,7 +1269,6 @@ void setup() {
     launch_usb_mode();
     return;
   }
-
 
   LCD_Init();
   Lvgl_Init();
@@ -1304,10 +1350,10 @@ void setup() {
     NULL,        // handle (not needed)
     0            // run on core 0
   );
+
   createSimpleUploadHandler("Movies", "/upload-movie");
   createSimpleUploadHandler("Music", "/upload-music");
   createSimpleUploadHandler("Books", "/upload-book");
-
 
   delay(2000);
 
@@ -1426,7 +1472,6 @@ void setup() {
         }
       }
 
-
       // === MUSIC ===
       playlist += "# === MUSIC ===\n";
       File musicDir = SD_MMC.open("/Music");
@@ -1470,6 +1515,7 @@ void setup() {
         </root>
       )rawliteral");
     });
+
     server.on("/ssdp/device-desc.xml", HTTP_GET, [](AsyncWebServerRequest *request) {
       request->send(200, "text/xml", R"rawliteral(
         <?xml version="1.0"?>
@@ -1489,6 +1535,7 @@ void setup() {
         </root>
       )rawliteral");
     });
+
     server.on("/dlna/description.xml", HTTP_GET, [](AsyncWebServerRequest *request) {
       request->send(200, "text/xml", R"rawliteral(
         <?xml version="1.0"?>
@@ -1507,6 +1554,7 @@ void setup() {
         </root>
       )rawliteral");
     });
+
     server.on("/description.xml", HTTP_GET, [](AsyncWebServerRequest *request) {
       AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
       response->addHeader("Application-URL", "http://" + WiFi.softAPIP().toString() + "/dlna/");
@@ -1557,6 +1605,7 @@ void setup() {
         </root>
       )rawliteral");
   });
+
   server.on("/ssdp/device-desc.xml", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/xml", R"rawliteral(
         <?xml version="1.0"?>
@@ -1576,6 +1625,7 @@ void setup() {
         </root>
       )rawliteral");
   });
+
   server.on("/dlna/description.xml", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/xml", R"rawliteral(
         <?xml version="1.0"?>
@@ -1594,13 +1644,13 @@ void setup() {
         </root>
       )rawliteral");
   });
+
   server.on("/description.xml", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
     response->addHeader("Application-URL", "http://" + WiFi.softAPIP().toString() + "/dlna/");
     response->addHeader("Location", "/dlna/desc.xml");  // HTTP redirect target
     request->send(response);
   });
-
 
   // Set LED mode: solid (0), rainbow (1), etc.
   server.on(
@@ -1696,8 +1746,6 @@ void setup() {
     ESP.restart();
   });
 
-
-
   // Captive Portal: Redirect all unknown requests
   server.onNotFound([](AsyncWebServerRequest *request) {
     if (request->hasHeader("User-Agent")) {
@@ -1713,6 +1761,7 @@ void setup() {
     Serial.println("Android device. Serving index.html");
     request->send(SD_MMC, "/index.html", "text/html");
   });
+
   // Captive triggers for Apple & Android devices
   server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Apple captive portal request detected, serving appleindex.html");
@@ -1723,6 +1772,7 @@ void setup() {
     Serial.println("Android/NORMAL captive portal request detected, serving index.html");
     request->send(SD_MMC, "/index.html", "text/html");
   });
+
   server.on("/dlna/desc.xml", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/xml", R"rawliteral(
         <?xml version="1.0"?>
@@ -1762,6 +1812,7 @@ void setup() {
     xml += "</ContentDirectory>";
     request->send(200, "text/xml", xml);
   });
+
   server.on("/listfiles", HTTP_GET, handleListFiles);
   server.serveStatic("/assets", SD_MMC, "/assets").setCacheControl("no-store, no-cache, must-revalidate, max-age=0");
   server.serveStatic("/assets/", SD_MMC, "/assets/").setCacheControl("no-store, no-cache, must-revalidate, max-age=0");
@@ -1789,8 +1840,6 @@ void setup() {
   server.serveStatic("/", SD_MMC, "/")
     .setDefaultFile("index.html")
     .setCacheControl("no-store, no-cache, must-revalidate, max-age=0");
-
-
   server.serveStatic("/Gallery", SD_MMC, "/Gallery")
     .setCacheControl("no-store, no-cache, must-revalidate, max-age=0");
   server.serveStatic("/Files", SD_MMC, "/Files")
@@ -1926,7 +1975,6 @@ void setup() {
     }
   });
 
-
   static std::map<AsyncWebServerRequest *, String> uploadPaths;
   server.on("/media", HTTP_GET, handleRangeRequest);  // THE MOST IMPORTANT ONE
   server.on("/rename", HTTP_POST, handleRename);
@@ -2020,7 +2068,6 @@ void setup() {
     doc["brightness"] = settings.brightness;
     doc["autoGenerateMedia"] = settings.autoGenerateMedia;
 
-
     String json;
     serializeJson(doc, json);
     request->send(200, "application/json", json);
@@ -2102,7 +2149,6 @@ void setup() {
     ESP.restart();
   });
 
-
   // ─── USB‑mode switch: jump to USB MSC on Boot‑button press ───
   attachInterrupt(
     BOOT_BUTTON_PIN, []() {
@@ -2153,7 +2199,6 @@ void loop() {
   delay(5);  // Prevent watchdog starvation
   updateClientCount();
 }
-
 
 void RGB_SetMode(uint8_t mode) {
   currentLEDMode = mode;
