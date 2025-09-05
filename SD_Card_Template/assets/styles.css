@@ -1,0 +1,34 @@
+/* /assets/styles.css */
+:root { --pad: 12px; --gap: 12px; --radius: 12px; --fg:#eaeaea; --bg:#0f0f0f; --muted:#9aa0a6; }
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); margin:0; font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+header { display:flex; align-items:center; gap:var(--gap); padding: var(--pad); border-bottom: 1px solid #222; position: sticky; top:0; background: #0f0f0fea; backdrop-filter: blur(6px); }
+header h1 { font-size: 16px; margin: 0; }
+#count { margin-left:auto; opacity:.8; }
+.container { padding: var(--pad); }
+
+form.search { display:flex; gap:8px; }
+.search input { width: 220px; padding:8px 10px; border-radius: 8px; border:1px solid #333; background:#111; color:var(--fg);}
+.search button { padding:8px 10px; border-radius: 8px; border:1px solid #333; background:#171717; color:var(--fg); cursor:pointer; }
+
+.grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--gap);
+}
+.card {
+  display:block; text-decoration:none; color:inherit;
+  background:#121212; border:1px solid #1e1e1e; border-radius: var(--radius);
+  overflow:hidden; transition: transform .08s ease, box-shadow .08s ease;
+}
+.card:hover { transform: translateY(-1px); box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+.card img { width:100%; aspect-ratio:2/3; object-fit:cover; background:#0a0a0a; display:block; }
+.card .title { padding:8px 10px; font-size: 13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.list { display:flex; flex-direction:column; gap:10px; }
+.row { display:flex; gap:10px; padding:10px; border:1px solid #1e1e1e; border-radius: var(--radius); text-decoration:none; color:inherit; background:#121212;}
+.row .thumb { width:64px; height:64px; object-fit:cover; border-radius:10px; background:#0a0a0a; }
+.row .meta .label { font-weight:600; }
+.row .meta .sub { color:var(--muted); font-size:12px; margin-top:2px; }
+
+.error { padding:12px; border:1px solid #472222; background:#1d0e0e; border-radius:10px; }
