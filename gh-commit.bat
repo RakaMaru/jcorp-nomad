@@ -1,80 +1,81 @@
 @echo off
-setlocal ENABLEDELAYEDEXPANSION
+setlocal EnableExtensions EnableDelayedExpansion
 
-rem --- sanity: must be in a git repo ---
-git rev-parse --is-inside-work-tree >nul 2>&1
-if errorlevel 1 (
-  echo Not a git repository here.
+REM ===== Repo root sanity check =====
+if not exist ".git" (
+  echo This doesn't look like a Git repo. Aborting.
   exit /b 1
 )
 
-rem --- ensure we are on dev ---
-for /f "delims=" %%A in ('git branch --show-current') do set CURR=%%A
-if /i not "%CURR%"=="dev" (
-  echo You are on "%CURR%". Switching to dev...
-  git checkout dev || exit /b 1
+REM ===== Ensure we're on dev =====
+for /f "delims=" %%B in ('git rev-parse --abbrev-ref HEAD') do set "CUR_BRANCH=%%B"
+if /I not "%CUR_BRANCH%"=="dev" (
+  echo Switching to dev...
+  git checkout dev || (echo Failed to switch to dev.& exit /b 1)
 )
 
-rem --- fetch and merge latest main into dev (fast-forward or conflict) ---
+REM ===== Fetch and fast-forward dev with origin/main =====
 echo Fetching origin...
-git fetch origin || exit /b 1
+git fetch origin || (echo Fetch failed.& exit /b 1)
+
 echo Merging origin/main into dev (fast-forward if possible)...
 git merge --ff-only origin/main >nul 2>&1
 if errorlevel 1 (
-  echo Non-ff merge or conflicts. Skipping auto-merge. You can merge manually later.
+  echo (No fast-forward; continuing without merge.)
+) else (
+  echo Already up to date.>nul
 )
 
-:askmsg
-set "MSG="
-set /p MSG=Commit message (required): 
-if not defined MSG goto askmsg
+REM ===== Get commit message (args or prompt) =====
+set "COMMIT_MSG=%*"
+if "%COMMIT_MSG%"=="" (
+  <nul set /p "=Commit message (required): "
+  set /p "COMMIT_MSG="
+  echo(
+)
+if "%COMMIT_MSG%"=="" (
+  echo No commit message provided. Aborting.
+  exit /b 1
+)
 
-echo.
+REM ===== Stage, detect if anything changed =====
 echo Staging all changes...
-git add -A || exit /b 1
+git add -A
 
+git diff --cached --quiet
+set "DIFF_ERR=%ERRORLEVEL%"
+if "%DIFF_ERR%"=="0" (
+  echo Nothing to commit. Skipping commit/push.
+  goto OPTIONAL_PR
+)
+
+REM ===== Commit using a temp file to avoid quoting issues =====
 echo Committing...
-git commit -m "%MSG%"
-if errorlevel 1 (
-  echo Nothing to commit or commit failed.
-  goto maybePush
-)
+set "MSGFILE=%TEMP%\ghmsg_%RANDOM%.txt"
+> "%MSGFILE%" echo %COMMIT_MSG%
+git commit -F "%MSGFILE%" || (del "%MSGFILE%" >nul 2>&1 & echo Commit failed.& exit /b 1)
+del "%MSGFILE%" >nul 2>&1
 
-:maybePush
+REM ===== Push =====
 echo Pushing to origin/dev...
-git push origin dev || exit /b 1
+git push origin dev || (echo Push failed.& exit /b 1)
 
-rem --- optional PR flow if gh is installed ---
+:OPTIONAL_PR
+REM ===== Optional PR step =====
 where gh >nul 2>&1
-if errorlevel 1 (
-  echo gh CLI not found; skipping PR step.
-  goto done
+if errorlevel 1 goto DONE
+
+set "MAKEPR="
+set /p "MAKEPR=Create PR dev -> main and try to merge it now? [Y,N]? "
+if /I "%MAKEPR%"=="Y" (
+  echo Creating PR...
+  gh pr create --base main --head dev --title "%COMMIT_MSG%" --body "%COMMIT_MSG%"
+  if errorlevel 1 goto DONE
+  echo Attempting merge...
+  gh pr merge --merge
 )
 
-choice /c YN /m "Create PR dev -> main and try to merge it now?"
-if errorlevel 2 goto done
-
-echo Creating PR...
-gh pr create --base main --head dev --title "%MSG%" --body "Automated commit: %MSG%"
-if errorlevel 1 (
-  echo Failed to create PR. Skipping merge.
-  goto done
-)
-
-echo Attempting merge...
-gh pr merge --merge --auto
-if errorlevel 1 (
-  echo Merge not completed (may need approvals or checks). Skipping.
-  goto done
-)
-
-echo Pulling updated main and re-syncing dev...
-git checkout main && git pull origin main
-git checkout dev && git merge --ff-only main
-git push origin dev
-
-:done
-echo.
+:DONE
 echo Done.
 endlocal
 exit /b 0
