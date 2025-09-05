@@ -1,62 +1,81 @@
 @echo off
-setlocal enableextensions
+setlocal EnableExtensions EnableDelayedExpansion
 
-REM --- Always run from repo root (this file's folder) ---
-cd /d "%~dp0"
-
-echo Fetching origin...
-git fetch origin
-
-REM --- Make sure we’re on dev ---
-for /f "tokens=1" %%B in ('git rev-parse --abbrev-ref HEAD') do set "CURBR=%%B"
-if /i not "%CURBR%"=="dev" (
-  echo Switching to dev...
-  git checkout dev || goto :ERR
+REM ===== Repo root sanity check =====
+if not exist ".git" (
+  echo This doesn't look like a Git repo. Aborting.
+  exit /b 1
 )
+
+REM ===== Ensure we're on dev =====
+for /f "delims=" %%B in ('git rev-parse --abbrev-ref HEAD') do set "CUR_BRANCH=%%B"
+if /I not "%CUR_BRANCH%"=="dev" (
+  echo Switching to dev...
+  git checkout dev || (echo Failed to switch to dev.& exit /b 1)
+)
+
+REM ===== Fetch and fast-forward dev with origin/main =====
+echo Fetching origin...
+git fetch origin || (echo Fetch failed.& exit /b 1)
 
 echo Merging origin/main into dev (fast-forward if possible)...
-git merge --ff-only origin/main
-if errorlevel 1 goto :MERGE_CONFLICT
-
-REM --- Get commit message (arg or prompt) ---
-set "MSG="
-if "%~1"=="" (
-  set /p "MSG=Commit message (required): "
+git merge --ff-only origin/main >nul 2>&1
+if errorlevel 1 (
+  echo (No fast-forward; continuing without merge.)
 ) else (
-  set "MSG=%*"
+  echo Already up to date.>nul
 )
 
-if not defined MSG (
+REM ===== Get commit message (args or prompt) =====
+set "COMMIT_MSG=%*"
+if "%COMMIT_MSG%"=="" (
+  <nul set /p "=Commit message (required): "
+  set /p "COMMIT_MSG="
+  echo(
+)
+if "%COMMIT_MSG%"=="" (
   echo No commit message provided. Aborting.
-  goto :END
+  exit /b 1
 )
 
+REM ===== Stage, detect if anything changed =====
 echo Staging all changes...
 git add -A
 
-echo Committing...
-git commit -m "%MSG%" >nul 2>&1
-if errorlevel 1 (
-  echo Nothing to commit (working tree clean).
-) else (
-  echo Commit created.
+git diff --cached --quiet
+set "DIFF_ERR=%ERRORLEVEL%"
+if "%DIFF_ERR%"=="0" (
+  echo Nothing to commit. Skipping commit/push.
+  goto OPTIONAL_PR
 )
 
+REM ===== Commit using a temp file to avoid quoting issues =====
+echo Committing...
+set "MSGFILE=%TEMP%\ghmsg_%RANDOM%.txt"
+> "%MSGFILE%" echo %COMMIT_MSG%
+git commit -F "%MSGFILE%" || (del "%MSGFILE%" >nul 2>&1 & echo Commit failed.& exit /b 1)
+del "%MSGFILE%" >nul 2>&1
+
+REM ===== Push =====
 echo Pushing to origin/dev...
-git push origin dev || goto :ERR
+git push origin dev || (echo Push failed.& exit /b 1)
 
+:OPTIONAL_PR
+REM ===== Optional PR step =====
+where gh >nul 2>&1
+if errorlevel 1 goto DONE
+
+set "MAKEPR="
+set /p "MAKEPR=Create PR dev -> main and try to merge it now? [Y,N]? "
+if /I "%MAKEPR%"=="Y" (
+  echo Creating PR...
+  gh pr create --base main --head dev --title "%COMMIT_MSG%" --body "%COMMIT_MSG%"
+  if errorlevel 1 goto DONE
+  echo Attempting merge...
+  gh pr merge --merge
+)
+
+:DONE
 echo Done.
-goto :END
-
-:MERGE_CONFLICT
-echo.
-echo Merge failed (not fast-forward). Resolve conflicts, then run this again.
-goto :END
-
-:ERR
-echo.
-echo An unexpected error occurred. Aborting.
-goto :END
-
-:END
 endlocal
+exit /b 0
