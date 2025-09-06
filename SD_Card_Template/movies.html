@@ -5,27 +5,57 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Movies</title>
   <link rel="stylesheet" href="/assets/styles.css">
-  <script defer src="/assets/library.js?v=2r"></script>
-
+  <script defer src="/assets/library.js?v=4"></script>
 </head>
 <body>
   <header>
+    <a href="/menu.html" style="text-decoration:none;color:inherit;">← Menu</a>
     <h1>Movies</h1>
-    <form id="searchForm" class="search" role="search">
-      <input id="search" type="search" placeholder="Search movies…" value="">
-      <button type="submit">Search</button>
-    </form>
-    <div id="count"></div>
+    <div class="toolbar">
+      <input id="searchInput" type="search" placeholder="Search movies…" aria-label="Search movies">
+      <select id="sortSelect" aria-label="Sort">
+        <option value="nameAsc">A → Z</option>
+        <option value="nameDesc">Z → A</option>
+      </select>
+      <button class="view-btn" data-size="small"  title="Compact">S</button>
+      <button class="view-btn active" data-size="medium" title="Comfort">M</button>
+      <button class="view-btn" data-size="large"  title="Large">L</button>
+      <div id="count"></div>
+    </div>
   </header>
 
   <div class="container">
-    <div id="grid" class="grid"></div>
+    <div id="grid" class="grid medium"></div>
+  </div>
+
+  <!-- Optional: these modals can be omitted; library.js will create them if missing -->
+
+  <!-- Action modal (View / Download) -->
+  <div id="actionModal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h2>What would you like to do?</h2>
+      <div class="actions">
+        <button id="viewButton">View in Browser</button>
+        <button id="downloadButton">Download</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline video modal -->
+  <div id="videoModal" class="modal video-modal" aria-hidden="true">
+    <div class="dialog">
+      <div class="titlebar">
+        <div class="title">Playing…</div>
+        <button type="button">Close</button>
+      </div>
+      <video id="videoPlayer" controls playsinline>Your browser does not support the video tag.</video>
+    </div>
   </div>
 
   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    Nomad.renderCategory("movie", { mode: "grid" });
-  });
+    document.addEventListener("DOMContentLoaded", () => {
+      Nomad.renderMovies(); // toolbar + modal + inline player are wired by /assets/library.js
+    });
   </script>
 </body>
 </html>
