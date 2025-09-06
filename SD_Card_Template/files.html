@@ -1,369 +1,71 @@
-<!DOCTYPE html>
-<!-- Nomad Files Page -->
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Jcorp Nomad Media Server – Files" />
-  <title>Nomad • Files</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
-  <style>
-    :root {
-      --primary: #007bff;
-      --primary-dark: #0056b3;
-      --bg: #f4f4f9;
-      --text: #333;
-      --radius: 8px;
-      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      padding: 0 0.5rem;
-    }
-    header {
-      background: var(--primary);
-      color: #fff;
-      padding: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      margin-left: -0.5rem;
-      margin-right: -0.5rem;
-      padding-left: calc(1rem + 0.5rem);
-      padding-right: calc(1rem + 0.5rem);
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    header h1 {
-      font-size: 1.5rem;
-      white-space: nowrap;
-    }
-    .back-btn {
-      color: #fff;
-      text-decoration: none;
-      background: var(--primary-dark);
-      padding: 0.5rem 0.75rem;
-      border-radius: var(--radius);
-      white-space: nowrap;
-    }
-    .toolbar {
-      background: var(--bg);
-      padding: 0.75rem 1rem;
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      align-items: center;
-      border-bottom: 1px solid #ddd;
-      position: sticky;
-      top: 56px;
-      z-index: 45;
-      justify-content: flex-end;
-      margin-left: -0.5rem;
-      margin-right: -0.5rem;
-      padding-left: calc(1rem + 0.5rem);
-      padding-right: calc(1rem + 0.5rem);
-    }
-    .toolbar input[type="search"] {
-      flex: 1 1 200px;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #ccc;
-      background: #fff;
-      border-radius: var(--radius);
-      font-size: 0.9rem;
-      min-width: 0;
-    }
-    .toolbar select {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #ccc;
-      background: #fff;
-      border-radius: var(--radius);
-      font-size: 0.9rem;
-      min-width: 120px;
-    }
-    main {
-      flex: 1;
-      padding: 1rem;
-      max-width: 800px;
-      width: 100%;
-      margin: 0 auto;
-    }
-    ul.file-list {
-      list-style: none;
-    }
-    ul.file-list li {
-      background: #fff;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 0.75rem 1rem;
-      margin-bottom: 0.75rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      word-break: break-word;
-    }
-    ul.file-list li a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 60%;
-      display: inline-block;
-    }
-    .file-info {
-      font-size: 0.85rem;
-      color: #555;
-      white-space: nowrap;
-      flex-shrink: 0;
-      min-width: 110px;
-      text-align: right;
-    }
-    footer {
-      padding: 1rem;
-      text-align: center;
-      font-size: 0.9rem;
-      color: #666;
-      margin-left: -0.5rem;
-      margin-right: -0.5rem;
-      padding-left: calc(1rem + 0.5rem);
-      padding-right: calc(1rem + 0.5rem);
-    }
-    @media (max-width: 600px) {
-      body {
-        padding: 0 0.25rem;
-      }
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-        padding-left: calc(1rem + 0.25rem);
-        padding-right: calc(1rem + 0.25rem);
-        margin-left: -0.25rem;
-        margin-right: -0.25rem;
-      }
-      header h1 {
-        white-space: normal;
-        font-size: 1.3rem;
-      }
-      .back-btn {
-        width: 100%;
-        text-align: center;
-        white-space: normal;
-      }
-      .toolbar {
-        flex-direction: column;
-        align-items: stretch;
-        justify-content: center;
-        padding-left: calc(1rem + 0.25rem);
-        padding-right: calc(1rem + 0.25rem);
-        margin-left: -0.25rem;
-        margin-right: -0.25rem;
-      }
-      .toolbar input[type="search"],
-      .toolbar select {
-        flex: none;
-        width: 100%;
-        min-width: auto;
-      }
-      main {
-        padding: 0.75rem 0.5rem;
-        width: 100%;
-      }
-      ul.file-list li {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-        padding: 0.5rem 0.75rem;
-      }
-      ul.file-list li a {
-        max-width: 100%;
-        white-space: normal;
-        word-break: break-word;
-      }
-      .file-info {
-        white-space: normal;
-        width: 100%;
-        text-align: left;
-        min-width: auto;
-      }
-      footer {
-        padding-left: calc(1rem + 0.25rem);
-        padding-right: calc(1rem + 0.25rem);
-        margin-left: -0.25rem;
-        margin-right: -0.25rem;
-      }
-    }
-  </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Files</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script defer src="/assets/library.js?v=4"></script>
 </head>
 <body>
   <header>
+    <a href="/menu.html" style="text-decoration:none;color:inherit;">← Menu</a>
     <h1>Files</h1>
-    <a class="back-btn" href="/menu">← Back to Menu</a>
+    <div class="toolbar">
+      <input id="searchInput" type="search" placeholder="Search files…" aria-label="Search files">
+      <select id="sortSelect" aria-label="Sort">
+        <option value="nameAsc">A → Z</option>
+        <option value="nameDesc">Z → A</option>
+      </select>
+      <button class="view-btn" data-size="small"  title="Compact">S</button>
+      <button class="view-btn active" data-size="medium" title="Comfort">M</button>
+      <button class="view-btn" data-size="large"  title="Large">L</button>
+      <div id="count"></div>
+    </div>
   </header>
 
-  <div class="toolbar">
-    <input id="searchInput" type="search" placeholder="Search files…" aria-label="Search files" />
-    <select id="typeFilter" aria-label="Filter by type">
-      <option value="all">All</option>
-      <option value="pdf">PDF</option>
-      <option value="txt">TXT</option>
-      <option value="zip">ZIP</option>
-      <option value="mp3">MP3</option>
-      <option value="mp4">MP4</option>
-      <option value="html">HTML</option>
-      <option value="stl">STL</option>
-      <option value="png">PNG</option>
-      <option value="jpg">JPG</option>
-      <option value="exe">EXE</option>
-      <option value="docx">DOCX</option>
-      <option value="xlsx">XLSX</option>
-      <option value="pptx">PPTX</option>
-    </select>
-    <select id="sortSelect" aria-label="Sort files">
-      <option value="nameAsc">Name A→Z</option>
-      <option value="nameDesc">Name Z→A</option>
-      <option value="sizeAsc">Size ↑</option>
-      <option value="sizeDesc">Size ↓</option>
-      <option value="typeAsc">Type ↑</option>
-      <option value="typeDesc">Type ↓</option>
-    </select>
+  <div class="container">
+    <div id="list" class="list medium"></div>
   </div>
 
-  <main>
-    <ul id="fileList" class="file-list"></ul>
-  </main>
+  <!-- Optional: library.js v4 will auto-create these if missing -->
+  <div id="actionModal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h2>What would you like to do?</h2>
+      <div class="actions">
+        <button id="viewButton">View</button>
+        <button id="downloadButton">Download</button>
+      </div>
+    </div>
+  </div>
 
-  <footer>© <span id="year"></span> Jcorp Nomad</footer>
+  <div id="videoModal" class="modal video-modal" aria-hidden="true">
+    <div class="dialog">
+      <div class="titlebar">
+        <div class="title">Playing…</div>
+        <button type="button">Close</button>
+      </div>
+      <video id="videoPlayer" controls playsinline></video>
+    </div>
+  </div>
+
+  <div id="imageModal" class="modal image-modal" aria-hidden="true">
+    <div class="dialog">
+      <div class="titlebar">
+        <div class="title">Image</div>
+        <button type="button">Close</button>
+      </div>
+      <img id="imageViewer" alt=""/>
+    </div>
+  </div>
+
+  <!-- Sticky audio bar is injected by library.js when you play audio -->
 
   <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    const fileListEl = document.getElementById('fileList');
-    const searchInput = document.getElementById('searchInput');
-    const sortSelect = document.getElementById('sortSelect');
-    const typeFilter = document.getElementById('typeFilter');
-
-    let files = [], filtered = [];
-
-    function formatBytes(bytes) {
-      if (bytes === 0) return '0 B';
-      const k = 1024;
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    }
-
-    async function init() {
-      try {
-        const res = await fetch('/media.json');
-        const json = await res.json();
-        files = (json.files || []).map(f => {
-          const ext = f.file.split('.').pop().toLowerCase();
-          return { name: f.name, path: f.file.startsWith('/') ? f.file : '/' + f.file, type: ext, size: 0 };
-        });
-                
-        await Promise.all(
-          files.map(async (file) => {
-            try {
-              const response = await fetch(file.path, {
-                method: 'GET',
-                headers: { 'Range': 'bytes=0-0' },
-              });
-              const len = response.headers.get('Content-Range')?.split('/')[1];
-              file.size = parseInt(len) || 0;
-            } catch {
-              file.size = 0;
-            }
-        
-            // Update UI if visible
-            if (file._infoEl) {
-              file._infoEl.textContent = `${file.type.toUpperCase()} • ${formatBytes(file.size)}`;
-            }
-          })
-        );
-
-        applyFilters();
-      } catch (e) {
-        console.error('Error loading files:', e);
-        fileListEl.innerHTML = '<li>Error loading files.</li>';
-      }
-    }
-
-    function applyFilters() {
-      const term = searchInput.value.trim().toLowerCase();
-      const type = typeFilter.value;
-      filtered = files.filter(f => f.name.toLowerCase().includes(term) && (type === 'all' || f.type === type));
-      applySort();
-    }
-
-    function applySort() {
-      const mode = sortSelect.value;
-      filtered.sort((a, b) => {
-        if (mode === 'nameAsc') return a.name.localeCompare(b.name);
-        if (mode === 'nameDesc') return b.name.localeCompare(a.name);
-        if (mode === 'sizeAsc') return a.size - b.size;
-        if (mode === 'sizeDesc') return b.size - a.size;
-        if (mode === 'typeAsc') return a.type.localeCompare(b.type);
-        if (mode === 'typeDesc') return b.type.localeCompare(a.type);
-        return 0;
-      });
-      render();
-    }
-
-    function render() {
-      fileListEl.innerHTML = '';
-      filtered.forEach(f => {
-        const li = document.createElement('li');
-    
-        const link = document.createElement('a');
-        link.href = f.path;
-        link.download = f.name;
-        link.textContent = f.name;
-        link.title = f.name;
-    
-        const info = document.createElement('div');
-        info.className = 'file-info';
-        const sizeKnown = typeof f.size === 'number' && f.size > 0;
-        info.textContent = sizeKnown
-          ? `${f.type.toUpperCase()} • ${formatBytes(f.size)}`
-          : `${f.type.toUpperCase()} • …`;
-    
-        f._infoEl = info;
-    
-        li.appendChild(link);
-        li.appendChild(info);
-        fileListEl.appendChild(li);
-      });
-    }
-
-
-    searchInput.addEventListener('input', () => {
-      applyFilters();
+    document.addEventListener("DOMContentLoaded", () => {
+      // List mode with shared controls and viewers
+      Nomad.renderWithControls('file', { mode: 'list' });
     });
-    typeFilter.addEventListener('change', () => {
-      applyFilters();
-    });
-    sortSelect.addEventListener('change', () => {
-      applySort();
-    });
-
-    init();
   </script>
 </body>
 </html>

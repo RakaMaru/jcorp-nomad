@@ -1,139 +1,69 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Jcorp Nomad Media Server">
-    <title>Jcorp Nomad Media Server</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <style>
-        :root {
-            --primary: #007bff;
-            --primary-dark: #0056b3;
-            --bg: #f4f4f9;
-            --text: #333;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg);
-            color: var(--text);
-            text-align: center;
-        }
-        header {
-            background-color: var(--primary);
-            color: #fff;
-            padding: 20px;
-            font-size: 2em;
-        }
-        .content {
-            padding: 20px;
-        }
-        .buttons {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-            align-items: center;
-        }
-        .buttons a {
-            background-color: var(--primary);
-            color: #fff;
-            text-decoration: none;
-            padding: 15px 25px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-            font-size: 1.2em;
-            text-align: center;
-        }
-        .buttons a:hover {
-            background-color: var(--primary-dark);
-        }
-        /* Quick toggle helper – add the class "hidden" to any <a> below to hide it without breaking layout */
-        .hidden {
-            display: none !important;
-        }
-
-        @media (max-width: 600px) {
-            .buttons {
-                flex-direction: column;
-                gap: 10px;
-            }
-            .buttons a {
-                width: 90%;
-                padding: 12px;
-                font-size: 1em;
-            }
-        }
-        header {
-            position: relative;
-            background-color: var(--primary);
-            color: #fff;
-            padding: 20px;
-            font-size: 2em;
-        }
-
-        .admin-link {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 0.8em;
-            color: #fff;
-            text-decoration: none;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 8px;
-            border-radius: 50%;
-            transition: background 0.3s;
-        }
-
-        .admin-link:hover {
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Nomad • Menu</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script defer src="/assets/library.js?v=4"></script>
+  <style>
+    .menu-grid{ display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); }
+    .menu-card .title{ display:flex; align-items:center; justify-content:space-between; }
+    .menu-card .badge{ font-size:12px; color:var(--muted); }
+  </style>
 </head>
 <body>
-    <header>
-        Jcorp Nomad
-        <a href="http://192.168.4.1/admin" class="admin-link" title="Admin Panel">⚙️</a>
-    </header>
+  <header>
+    <h1>Nomad</h1>
+  </header>
 
-    <div class="content">
-        <p>Welcome to Jcorp Nomad, your offline media hub. Select a category below to start exploring your content.</p>
-
-        <!--
-            Toggle menu items:
-            1. Comment out any button line – example:
-               <a href="maps">Maps</a> 
-            2. Or add the helper class – example:
-               <a href="maps" class="hidden"&gt;Maps&lt
-            Either method hides the button while keeping the layout intact.
-        -->
-        <div class="buttons">
-            <!-- Movies -->
-            <a href="movies">Movies</a>
-
-            <!-- Shows -->
-            <a href="shows">Shows</a>
-
-            <!-- Books -->
-            <a href="books">Books</a>
-
-            <!-- Music -->
-            <a href="music">Music</a>
-
-            <a href="gallery">Gallery</a>
-
-            <a href="files">Files</a>
-
-            <!-- Games -->
-            <!--<a href="games">Games</a>
-
-            <-- Maps -->
-            <!--<a href="maps">Maps</a> -->
-        </div>
+  <div class="container">
+    <div id="grid" class="menu-grid">
+      <!-- Cards will be injected with live counts -->
     </div>
+  </div>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      // Use shared loader helpers from /assets/library.js
+      const db    = await fetchDB();
+      const items = normalizeItems(db);
+
+      const count = {
+        movies : filterByCategory(items, "movie").length,
+        shows  : filterByCategory(items, "show").length,
+        music  : filterByCategory(items, "music").length,
+        images : filterByCategory(items, "image").length,
+        books  : filterByCategory(items, "book").length,
+        files  : filterByCategory(items, "file").length,
+      };
+
+      const cards = [
+        { href: "/movies.html",  label: "Movies",  badge: count.movies  },
+        { href: "/shows.html",   label: "Shows",   badge: count.shows   },
+        { href: "/music.html",   label: "Music",   badge: count.music   },
+        { href: "/gallery.html", label: "Gallery", badge: count.images  },
+        { href: "/books.html",   label: "Books",   badge: count.books   },
+        { href: "/files.html",   label: "Files",   badge: count.files   },
+        { href: "/admin.html",   label: "Admin",   badge: ""            },
+      ];
+
+      const el = document.getElementById("grid");
+      el.innerHTML = cards.map(c => `
+        <a class="card menu-card" href="${c.href}">
+          <div class="title">
+            <span>${c.label}</span>
+            <span class="badge">${c.badge !== "" ? c.badge + " item" + (c.badge===1?"":"s") : ""}</span>
+          </div>
+        </a>
+      `).join("");
+    } catch (e) {
+      const el = document.getElementById("grid");
+      el.innerHTML = `<div class="error">Failed to load menu: ${e.message||e}</div>`;
+      console.error(e);
+    }
+  });
+  </script>
 </body>
 </html>
