@@ -1,62 +1,51 @@
+============================================================
+File list for: C:\common\Arduino\jcorp-nomad
+Generated on : Sun 09/07/2025 14:45:47.31
+Script       : gh-filelist.bat
+============================================================
+
+[TREE /A]
+Folder PATH listing for volume OS
+Volume serial number is C2DB-DE38
+C:.
++---case
++---docs
+|   +---assets
+|   \---backup
++---firmware
+|   \---JcorpNomadProject
+|       \---.theia
+\---SD_Card_Template
+    +---assets
+    |   \---jqueryfiletree
+    |       \---images
+    +---Books
+    +---Files
+    +---Gallery
+    +---Movies
+    +---Music
+    \---Shows
+        \---Placeholder Show
+
+------------------------------------------------------------
+[FLAT LIST: dir /s /b  (EXCLUDES .git)]
+------------------------------------------------------------
 C:\common\Arduino\jcorp-nomad\.gitattributes
 C:\common\Arduino\jcorp-nomad\.gitignore
 C:\common\Arduino\jcorp-nomad\case
 C:\common\Arduino\jcorp-nomad\docs
 C:\common\Arduino\jcorp-nomad\filelist.txt
 C:\common\Arduino\jcorp-nomad\firmware
+C:\common\Arduino\jcorp-nomad\gh-dev-reset.bat
+C:\common\Arduino\jcorp-nomad\gh-dev-sync.bat
+C:\common\Arduino\jcorp-nomad\gh-dev-to-main-commit.bat
+C:\common\Arduino\jcorp-nomad\gh-filelist.bat
 C:\common\Arduino\jcorp-nomad\LICENSE.md
+C:\common\Arduino\jcorp-nomad\main
 C:\common\Arduino\jcorp-nomad\README.md
 C:\common\Arduino\jcorp-nomad\Screenshot 2025-07-07 193521.png
 C:\common\Arduino\jcorp-nomad\Screenshot 2025-08-10 220031.png
 C:\common\Arduino\jcorp-nomad\SD_Card_Template
-C:\common\Arduino\jcorp-nomad\.git\COMMIT_EDITMSG
-C:\common\Arduino\jcorp-nomad\.git\config
-C:\common\Arduino\jcorp-nomad\.git\description
-C:\common\Arduino\jcorp-nomad\.git\HEAD
-C:\common\Arduino\jcorp-nomad\.git\hooks
-C:\common\Arduino\jcorp-nomad\.git\index
-C:\common\Arduino\jcorp-nomad\.git\info
-C:\common\Arduino\jcorp-nomad\.git\logs
-C:\common\Arduino\jcorp-nomad\.git\objects
-C:\common\Arduino\jcorp-nomad\.git\packed-refs
-C:\common\Arduino\jcorp-nomad\.git\refs
-C:\common\Arduino\jcorp-nomad\.git\hooks\applypatch-msg.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\commit-msg.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\fsmonitor-watchman.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\post-update.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\pre-applypatch.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\pre-commit.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\pre-merge-commit.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\pre-push.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\pre-rebase.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\pre-receive.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\prepare-commit-msg.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\push-to-checkout.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\sendemail-validate.sample
-C:\common\Arduino\jcorp-nomad\.git\hooks\update.sample
-C:\common\Arduino\jcorp-nomad\.git\info\exclude
-C:\common\Arduino\jcorp-nomad\.git\logs\HEAD
-C:\common\Arduino\jcorp-nomad\.git\logs\refs
-C:\common\Arduino\jcorp-nomad\.git\logs\refs\heads
-C:\common\Arduino\jcorp-nomad\.git\logs\refs\remotes
-C:\common\Arduino\jcorp-nomad\.git\logs\refs\heads\dev
-C:\common\Arduino\jcorp-nomad\.git\logs\refs\heads\main
-C:\common\Arduino\jcorp-nomad\.git\logs\refs\remotes\origin
-C:\common\Arduino\jcorp-nomad\.git\logs\refs\remotes\origin\dev
-C:\common\Arduino\jcorp-nomad\.git\logs\refs\remotes\origin\HEAD
-C:\common\Arduino\jcorp-nomad\.git\objects\info
-C:\common\Arduino\jcorp-nomad\.git\objects\pack
-C:\common\Arduino\jcorp-nomad\.git\objects\pack\pack-3f4bb5b44458a93b50052cf5fb9e34cbc6c98f71.idx
-C:\common\Arduino\jcorp-nomad\.git\objects\pack\pack-3f4bb5b44458a93b50052cf5fb9e34cbc6c98f71.pack
-C:\common\Arduino\jcorp-nomad\.git\objects\pack\pack-3f4bb5b44458a93b50052cf5fb9e34cbc6c98f71.rev
-C:\common\Arduino\jcorp-nomad\.git\refs\heads
-C:\common\Arduino\jcorp-nomad\.git\refs\remotes
-C:\common\Arduino\jcorp-nomad\.git\refs\tags
-C:\common\Arduino\jcorp-nomad\.git\refs\heads\dev
-C:\common\Arduino\jcorp-nomad\.git\refs\heads\main
-C:\common\Arduino\jcorp-nomad\.git\refs\remotes\origin
-C:\common\Arduino\jcorp-nomad\.git\refs\remotes\origin\dev
-C:\common\Arduino\jcorp-nomad\.git\refs\remotes\origin\HEAD
 C:\common\Arduino\jcorp-nomad\case\JcorpNomadBackCover.stl
 C:\common\Arduino\jcorp-nomad\case\JcorpNomadFrontCover.stl
 C:\common\Arduino\jcorp-nomad\case\NomadNewCase v16.stl
@@ -147,6 +136,8 @@ C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\shows.html
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\assets\jquery.min.js
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\assets\jqueryfiletree
+C:\common\Arduino\jcorp-nomad\SD_Card_Template\assets\library.js
+C:\common\Arduino\jcorp-nomad\SD_Card_Template\assets\styles.css
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\assets\jqueryfiletree\images
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\assets\jqueryfiletree\jQueryFileTree.min.css
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\assets\jqueryfiletree\jQueryFileTree.min.js
@@ -204,3 +195,7 @@ C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show.jpg
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show\S01Ep01 - Pilot.mp4
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show\S01Ep02 - Episode 2.mp4
+
+[TOTALS  (EXCLUDES .git)]
+Directories: 18
+Files      : 147
