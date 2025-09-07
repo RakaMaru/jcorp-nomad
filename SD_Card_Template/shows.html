@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Shows</title>
   <link rel="stylesheet" href="/assets/styles.css">
-  <script defer src="/assets/library.js?v=4"></script>
+  <script defer src="/assets/library.js?v=4.2"></script>
 </head>
 <body>
   <header>
     <a href="/menu.html" style="text-decoration:none;color:inherit;">← Menu</a>
     <h1>Shows</h1>
     <div class="toolbar">
-      <input id="searchInput" type="search" placeholder="Search shows…" aria-label="Search shows">
+      <input id="searchInput" type="search" placeholder="Search…" aria-label="Search shows or episodes">
       <select id="sortSelect" aria-label="Sort">
         <option value="nameAsc">A → Z</option>
         <option value="nameDesc">Z → A</option>
@@ -26,9 +26,10 @@
 
   <div class="container">
     <div id="grid" class="grid medium"></div>
+    <!-- breadcrumb injected above grid when viewing a series -->
   </div>
 
-  <!-- Optional: library.js will auto-create these if missing -->
+  <!-- Optional: library.js creates these if missing -->
   <div id="actionModal" class="modal" aria-hidden="true">
     <div class="dialog" role="dialog" aria-modal="true">
       <h2>What would you like to do?</h2>
@@ -51,8 +52,7 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // Flat episode list for now (grid). We can add series-grouping next.
-      Nomad.renderWithControls('show', { mode: 'grid' });
+      Nomad.renderShowsGrouped();
     });
   </script>
 </body>

@@ -1,14 +1,12 @@
-/* Nomad library — v4
-   - Section-aware loader (movies, shows→episodes, music, gallery, books, files)
-   - Movies UX (toolbar + modal + inline video with stall-retry) — as shipped
-   - Generic renderer: Nomad.renderWithControls(kind, {mode:'grid'|'list'})
-     * Toolbar: live search, A→Z/Z→A, S/M/L sizes (persisted)
-     * View/Download modal
-     * Viewers: video modal, dynamic audio bar, image modal
-   Paste as /assets/library.js (no <script> tags). */
+/* Nomad library — v4.2
+   - Strict origin-based filtering (media.json is source of truth)
+   - Movies shows ONLY items from movies[]
+   - Shows: Series grid → Episodes (grouped), plays inline with stall-retry
+   - Music/Gallery/Books/Files also strict to their arrays
+*/
 "use strict";
 
-console.log("Nomad library v4 loaded ✓");
+console.log("Nomad library v4.2 loaded ✓");
 
 /* =========================
    Config / Types
@@ -17,12 +15,12 @@ const VIDEO_EXTS = new Set([".mp4", ".mov", ".mkv", ".webm", ".m4v", ".avi"]);
 const AUDIO_EXTS = new Set([".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg"]);
 const IMAGE_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
-const PLACEHOLDER = "/placeholder.jpg";     // your placeholder lives in the SD root
-const USE_STREAM_ROUTE = true;              // true => /media?file=... for video/audio "View"
+const PLACEHOLDER = "/placeholder.jpg";
+const USE_STREAM_ROUTE = true;
 const STREAM_PREFIX = "/media?file=";
 
 /* =========================
-   Small Helpers
+   Helpers
    ========================= */
 const numChunks = s => String(s).split(/(\d+)/).map(t => (/\d+/.test(t) ? Number(t) : t.toLowerCase()));
 const ncmp = (a, b) => {
@@ -46,13 +44,13 @@ const baseNoExt = p => String(p).replace(/\.[^.]+$/, "");
 const fileName = p => decodeURIComponent(String(p).split("/").pop() || p);
 const titleFrom = it => it.title || it.name || fileName(it.path).replace(/\.[^.]+$/, "");
 const guessCoverFromPath = p => `${baseNoExt(p)}.jpg`;
-
 const isVideo = p => VIDEO_EXTS.has(ext(p));
 const isAudio = p => AUDIO_EXTS.has(ext(p));
 const isImage = p => IMAGE_EXTS.has(ext(p));
+const $ = sel => document.querySelector(sel);
 
 /* =========================
-   Fetch + Normalize media.json
+   Fetch media.json
    ========================= */
 async function fetchDB() {
   const url = `/media.json?v=${Date.now()}`; // cache-buster
@@ -61,58 +59,76 @@ async function fetchDB() {
   return await res.json();
 }
 
-/* Recursively collect entries from any shape */
+/* =========================
+   Normalize (strict origin tagging)
+   - origin: 'movies' | 'shows' | 'music' | 'gallery' | 'books' | 'files'
+   - episodes from shows carry origin 'shows' and series name
+   ========================= */
 function normalizeItems(db) {
   const out = [];
-  const pushIfMedia = (x, inferredType = null) => {
+
+  const pushItem = (x, origin, series = null) => {
     if (!x || typeof x !== "object") return;
     const p = x.path || x.file || x.url;
     if (!p) return;
-    const t = (x.type || inferredType || guessType({ path: p })).toLowerCase();
     const cover = x.cover || x.thumbnail || null;
+
+    // type is only for viewer behavior; origin decides page visibility.
+    let t = x.type || null;
+    if (!t) {
+      const e = ext(p);
+      if (origin === "movies") t = "movie";
+      else if (origin === "shows") t = "show";
+      else if (origin === "music") t = "music";
+      else if (origin === "gallery") t = "image";
+      else if (origin === "books") t = "book";
+      else if (origin === "files") {
+        if (isVideo(p)) t = "movie"; else if (isAudio(p)) t = "music"; else if (isImage(p)) t = "image"; else if (e === ".pdf" || e === ".epub") t = "book"; else t = "file";
+      } else {
+        // fallback by extension
+        if (isVideo(p)) t = "movie"; else if (isAudio(p)) t = "music"; else if (isImage(p)) t = "image"; else if (p.toLowerCase().endsWith(".pdf") || p.toLowerCase().endsWith(".epub")) t = "book"; else t = "file";
+      }
+    }
+
     out.push({
-      ...x,
+      origin,
+      series,                         // only for shows episodes
       title: x.title || x.name || fileName(p).replace(/\.[^.]+$/, ""),
       path: ensureAbs(p),
       cover: cover ? ensureAbs(cover) : null,
-      type: t
+      type: String(t).toLowerCase(),
+      _raw: x
     });
   };
 
-  const walk = (node, keyCtx = null) => {
-    if (Array.isArray(node)) {
-      const inferred = keyCtx && /episodes/i.test(keyCtx) ? "show" : null;
-      for (const v of node) {
-        if (v && typeof v === "object" && (v.path || v.file || v.url)) pushIfMedia(v, inferred);
-        else walk(v, keyCtx);
-      }
-    } else if (node && typeof node === "object") {
-      if (node.path || node.file || node.url) pushIfMedia(node, keyCtx);
-      for (const k of Object.keys(node)) {
-        const child = node[k];
-        const inferred =
-          /movies?/i.test(k) ? "movie" :
-          /shows?/i.test(k)  ? "show"  :
-          /music|songs?/i.test(k) ? "music" :
-          /gallery|images?/i.test(k) ? "image" :
-          /books|pdfs?/i.test(k) ? "book" :
-          /files?/i.test(k) ? "file" : null;
+  // Walkers per section ensure origin is correct.
+  const readMovies = arr => Array.isArray(arr) && arr.forEach(it => pushItem(it, "movies"));
+  const readMusic  = arr => Array.isArray(arr) && arr.forEach(it => pushItem(it, "music"));
+  const readGallery= arr => Array.isArray(arr) && arr.forEach(it => pushItem(it, "gallery"));
+  const readBooks  = arr => Array.isArray(arr) && arr.forEach(it => pushItem(it, "books"));
+  const readFiles  = arr => Array.isArray(arr) && arr.forEach(it => pushItem(it, "files"));
 
-        if (Array.isArray(child)) {
-          for (const v of child) {
-            if (v && typeof v === "object" && (v.path || v.file || v.url)) pushIfMedia(v, inferred);
-            else walk(v, k);
-          }
-        } else {
-          walk(child, k);
-        }
+  const readShows = arr => {
+    if (!Array.isArray(arr)) return;
+    for (const seriesObj of arr) {
+      if (!seriesObj) continue;
+      // Series metadata (series-level cover optional)
+      const seriesName = seriesObj.title || seriesObj.name || seriesObj.series || null;
+      const episodes = seriesObj.episodes || [];
+      if (Array.isArray(episodes)) {
+        for (const ep of episodes) pushItem(ep, "shows", seriesName);
       }
     }
   };
 
-  walk(db, null);
+  readMovies(db.movies);
+  readShows (db.shows);
+  readMusic (db.music);
+  readGallery(db.gallery);
+  readBooks (db.books);
+  readFiles (db.files);
 
-  // de-dupe by path
+  // De-dupe by path (keep first occurrence)
   const seen = new Set();
   return out.filter(it => {
     const k = (it.path || "").toLowerCase();
@@ -122,31 +138,22 @@ function normalizeItems(db) {
   });
 }
 
-function guessType(x) {
-  const p = (x.path || x.file || "").toLowerCase();
-  if (p.includes("/shows/") || p.includes("/tv/")) return "show";
-  const e = ext(p);
-  if (VIDEO_EXTS.has(e)) return "movie";
-  if (AUDIO_EXTS.has(e)) return "music";
-  if (IMAGE_EXTS.has(e)) return "image";
-  if (p.endsWith(".pdf") || p.endsWith(".epub")) return "book";
-  return "other";
-}
-
 /* =========================
-   Category helpers
+   Category filter (strict by origin)
    ========================= */
 function filterByCategory(items, category) {
   const q = new URLSearchParams(location.search).get("q")?.toLowerCase() || "";
   const passQ = it => !q || `${it.title} ${it.path}`.toLowerCase().includes(q);
 
-  if (category === "movie") return items.filter(it => (it.type === "movie" || isVideo(it.path)) && passQ);
-  if (category === "show")  return items.filter(it => (it.type === "show"  || it.path.toLowerCase().includes("/shows/")) && passQ);
-  if (category === "music") return items.filter(it => (it.type === "music" || isAudio(it.path)) && passQ);
-  if (category === "image") return items.filter(it => (it.type === "image" || isImage(it.path)) && passQ);
-  if (category === "book")  return items.filter(it => it.type === "book" && passQ);
-  if (category === "file")  return items.filter(it => it.type === "file" || (!isVideo(it.path) && !isAudio(it.path) && !isImage(it.path)));
-  return items.filter(passQ);
+  const wantOrigin =
+    category === "movie" ? "movies"  :
+    category === "show"  ? "shows"   :
+    category === "music" ? "music"   :
+    category === "image" ? "gallery" :
+    category === "book"  ? "books"   :
+    category === "file"  ? "files"   : null;
+
+  return wantOrigin ? items.filter(it => it.origin === wantOrigin && passQ) : items.filter(passQ);
 }
 
 /* =========================
@@ -162,7 +169,6 @@ function makeCardHTML(it, kind) {
     <div class="title">${label}</div>
   </a>`;
 }
-
 function makeListItemHTML(it) {
   const label = titleFrom(it);
   const href  = it.path;
@@ -176,13 +182,12 @@ function makeListItemHTML(it) {
     </div>
   </a>`;
 }
-
 function applyCount(n) {
   const el = document.querySelector("#count");
   if (el) el.textContent = `${n} item${n === 1 ? "" : "s"}`;
 }
 
-/* Simple search form (old pages) */
+/* Simple search form (legacy pages) */
 function wireSearchForm() {
   const box = document.querySelector("#search");
   const form = document.querySelector("#searchForm");
@@ -196,34 +201,10 @@ function wireSearchForm() {
   });
 }
 
-/* Generic category renderer (used by simple pages) */
-async function renderCategory(kind, { mode = "grid" } = {}) {
-  try {
-    wireSearchForm();
-    const db = await fetchDB();
-    const items = filterByCategory(normalizeItems(db), kind).sort((a, b) => ncmp(titleFrom(a), titleFrom(b)));
-    applyCount(items.length);
-    const container = document.querySelector("#grid") || document.querySelector("#list");
-    if (!container) return;
-    container.innerHTML = (mode === "list")
-      ? items.map(makeListItemHTML).join("")
-      : items.map(it => makeCardHTML(it, kind)).join("");
-  } catch (err) {
-    console.error(err);
-    const container = document.querySelector("#grid") || document.querySelector("#list");
-    if (container) container.innerHTML = `<div class="error">Failed to load library: ${String(err)}</div>`;
-  }
-}
-
 /* =========================
-   Shared UI pieces (modal/viewers)
+   Modal / viewers (shared)
    ========================= */
-const $ = sel => document.querySelector(sel);
-
-function mediaUrl(path) {
-  const p = ensureAbs(path);
-  return USE_STREAM_ROUTE ? (STREAM_PREFIX + encodeURIComponent(p)) : p;
-}
+function mediaUrl(path) { const p = ensureAbs(path); return USE_STREAM_ROUTE ? (STREAM_PREFIX + encodeURIComponent(p)) : p; }
 function downloadUrl(path) { return ensureAbs(path); }
 
 function ensureActionModal() {
@@ -243,7 +224,6 @@ function ensureActionModal() {
   document.body.appendChild(m);
   return m;
 }
-
 function ensureVideoModal() {
   let v = $("#videoModal");
   if (v) return v;
@@ -261,7 +241,6 @@ function ensureVideoModal() {
   document.body.appendChild(v);
   return v;
 }
-
 function ensureImageModal() {
   let m = $("#imageModal");
   if (m) return m;
@@ -279,7 +258,6 @@ function ensureImageModal() {
   document.body.appendChild(m);
   return m;
 }
-
 function ensureAudioBar() {
   let b = $("#audioBar");
   if (b) return b;
@@ -303,7 +281,7 @@ function ensureAudioBar() {
   return b;
 }
 
-/* Video stall-watcher */
+/* Stall watcher for video */
 function attachStallWatcher(player, src) {
   const MAX_RETRIES = 2, STALL_MS = 8000;
   let tries = 0, timer;
@@ -325,8 +303,6 @@ function attachStallWatcher(player, src) {
   player.onpause = () => clearTimeout(timer);
   player.onended = () => clearTimeout(timer);
 }
-
-/* Image & Audio helpers */
 function fmtTime(sec) {
   if (!isFinite(sec)) return "0:00";
   const s = Math.floor(sec % 60).toString().padStart(2, "0");
@@ -335,11 +311,31 @@ function fmtTime(sec) {
 }
 
 /* =========================
-   Movies page controller (kept as-is)
+   Base renderer (unchanged API for simple pages)
    ========================= */
+async function renderCategory(kind, { mode = "grid" } = {}) {
+  try {
+    wireSearchForm();
+    const db = await fetchDB();
+    const items = filterByCategory(normalizeItems(db), kind).sort((a, b) => ncmp(titleFrom(a), titleFrom(b)));
+    applyCount(items.length);
+    const container = document.querySelector("#grid") || document.querySelector("#list");
+    if (!container) return;
+    container.innerHTML = (mode === "list")
+      ? items.map(makeListItemHTML).join("")
+      : items.map(it => makeCardHTML(it, kind)).join("");
+  } catch (err) {
+    console.error(err);
+    const container = document.querySelector("#grid") || document.querySelector("#list");
+    if (container) container.innerHTML = `<div class="error">Failed to load library: ${String(err)}</div>`;
+  }
+}
 window.Nomad = window.Nomad || {};
 window.Nomad.renderCategory = renderCategory;
 
+/* =========================
+   Movies controller (now STRICT to origin 'movies')
+   ========================= */
 (function MoviesUI() {
   const state = {
     all: [], filtered: [],
@@ -356,7 +352,6 @@ window.Nomad.renderCategory = renderCategory;
       state.sort === "nameDesc" ? ncmp(titleFrom(b), titleFrom(a)) : ncmp(titleFrom(a), titleFrom(b))
     );
   }
-
   function paintGrid() {
     applyFilters();
     const grid = $("#grid");
@@ -374,7 +369,6 @@ window.Nomad.renderCategory = renderCategory;
       });
     });
   }
-
   function wireToolbar() {
     const input = $("#searchInput");
     if (input) {
@@ -399,10 +393,13 @@ window.Nomad.renderCategory = renderCategory;
     });
   }
 
-  // Modals
   const actionModal = ensureActionModal();
   const viewBtn     = $("#viewButton");
   const downloadBtn = $("#downloadButton");
+  const vModal  = ensureVideoModal();
+  const vTitle  = $("#videoModal .title");
+  const vClose  = $("#videoModal .titlebar button");
+  const vPlayer = $("#videoPlayer");
 
   function openActionModal(fileHref, title) {
     if (!actionModal || !viewBtn || !downloadBtn) { location.href = mediaUrl(fileHref); return; }
@@ -418,11 +415,6 @@ window.Nomad.renderCategory = renderCategory;
   }
   actionModal.addEventListener("click", e => { if (e.target === actionModal) actionModal.classList.remove("open"); });
 
-  const vModal  = ensureVideoModal();
-  const vTitle  = $("#videoModal .title");
-  const vClose  = $("#videoModal .titlebar button");
-  const vPlayer = $("#videoPlayer");
-
   function openInlinePlayer(src, title) {
     if (!vModal || !vPlayer) { location.href = src; return; }
     if (vTitle) vTitle.textContent = title || "Video";
@@ -436,20 +428,18 @@ window.Nomad.renderCategory = renderCategory;
 
   async function renderMovies() {
     const db = await fetchDB();
-    const all = normalizeItems(db).filter(it => it.type === "movie" || isVideo(it.path));
+    const all = filterByCategory(normalizeItems(db), "movie"); // <-- strict origin
     state.all = all.sort((a, b) => ncmp(titleFrom(a), titleFrom(b)));
     wireToolbar();
     paintGrid();
   }
-
   window.Nomad.renderMovies = renderMovies;
 })();
 
 /* =========================
-   Generic controller for other pages
+   Generic controller for other pages (strict)
    ========================= */
 window.Nomad.renderWithControls = async function(kind, { mode = "grid" } = {}) {
-  // State
   const state = {
     all: [], filtered: [],
     sizeKey: `nomad${kind}Size`,
@@ -459,13 +449,11 @@ window.Nomad.renderWithControls = async function(kind, { mode = "grid" } = {}) {
     q: ""
   };
 
-  // Load data
   const db = await fetchDB();
   const base = normalizeItems(db);
   const all  = filterByCategory(base, kind);
   state.all  = all.sort((a, b) => ncmp(titleFrom(a), titleFrom(b)));
 
-  // Wire toolbar
   const input = $("#searchInput");
   if (input) {
     let t; input.addEventListener("input", e => {
@@ -490,21 +478,17 @@ window.Nomad.renderWithControls = async function(kind, { mode = "grid" } = {}) {
     });
   });
 
-  // Viewers / modals (created on demand)
   const actionModal = ensureActionModal();
   const viewBtn     = $("#viewButton");
   const downloadBtn = $("#downloadButton");
-
   const vModal  = ensureVideoModal();
   const vTitle  = $("#videoModal .title");
   const vClose  = $("#videoModal .titlebar button");
   const vPlayer = $("#videoPlayer");
-
   const imgModal = ensureImageModal();
   const imgTitle = $("#imageModal .title");
   const imgClose = $("#imageModal .titlebar button");
   const imgView  = $("#imageViewer");
-
   const audioBar = ensureAudioBar();
   const abPrev   = $("#abPrev"),    abPlay = $("#abPlay"), abNext = $("#abNext");
   const abLoop   = $("#abLoop"),    abShuffle = $("#abShuffle");
@@ -518,10 +502,9 @@ window.Nomad.renderWithControls = async function(kind, { mode = "grid" } = {}) {
     audioIndex = idx;
     const it = audioList[audioIndex];
     abTitle.textContent = titleFrom(it);
-    abAudio.src = mediaUrl(it.path); // stream for audio too
+    abAudio.src = mediaUrl(it.path);
     abAudio.play().catch(()=>{});
   }
-
   abPlay.onclick = () => { if (abAudio.paused) abAudio.play(); else abAudio.pause(); };
   abPrev.onclick = () => {
     if (!audioList.length) return;
@@ -535,7 +518,6 @@ window.Nomad.renderWithControls = async function(kind, { mode = "grid" } = {}) {
   };
   abLoop.onclick = () => { audioLoop = !audioLoop; abLoop.classList.toggle("active", audioLoop); };
   abShuffle.onclick = () => { audioShuffle = !audioShuffle; abShuffle.classList.toggle("active", audioShuffle); };
-
   abAudio.addEventListener("timeupdate", () => {
     const p = abAudio.duration ? (abAudio.currentTime / abAudio.duration) : 0;
     abSeek.value = Math.round(p * 1000);
@@ -552,7 +534,6 @@ window.Nomad.renderWithControls = async function(kind, { mode = "grid" } = {}) {
 
   imgModal.addEventListener("click", e => { if (e.target === imgModal) imgModal.classList.remove("open"); });
   imgClose && imgClose.addEventListener("click", () => imgModal.classList.remove("open"));
-
   vModal.addEventListener("click", e => { if (e.target === vModal) { vPlayer.pause(); vModal.classList.remove("open"); } });
   vClose && vClose.addEventListener("click", () => { vPlayer.pause(); vModal.classList.remove("open"); });
 
@@ -563,28 +544,23 @@ window.Nomad.renderWithControls = async function(kind, { mode = "grid" } = {}) {
     viewBtn.onclick = () => {
       actionModal.classList.remove("open");
       if (isVideo(href)) {
-        // video modal
         if (vTitle) vTitle.textContent = title;
         const src = mediaUrl(href);
         vModal.classList.add("open");
         attachStallWatcher(vPlayer, src);
         vPlayer.src = src; vPlayer.play().catch(()=>{});
       } else if (isAudio(href)) {
-        // audio bar
         audioList = state.filtered.filter(x => isAudio(x.path));
         const idx = audioList.findIndex(x => x.path === href);
         setAudioSource(Math.max(idx, 0));
         window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
       } else if (isImage(href)) {
-        // image modal (direct path)
         if (imgTitle) imgTitle.textContent = title;
         imgView.src = downloadUrl(href);
         imgModal.classList.add("open");
       } else if (href.toLowerCase().endsWith(".pdf")) {
-        // books/files: open PDF directly
         window.open(downloadUrl(href), "_blank");
       } else {
-        // fallback: just navigate
         location.href = downloadUrl(href);
       }
     };
@@ -596,7 +572,6 @@ window.Nomad.renderWithControls = async function(kind, { mode = "grid" } = {}) {
       a.click();
     };
   }
-  actionModal.addEventListener("click", e => { if (e.target === actionModal) actionModal.classList.remove("open"); });
 
   function applyFilters() {
     const q = state.q;
@@ -634,7 +609,183 @@ window.Nomad.renderWithControls = async function(kind, { mode = "grid" } = {}) {
 };
 
 /* =========================
-   Optional Debug overlay (?debug=1)
+   Shows (grouped) — Series grid → Episodes
+   ========================= */
+window.Nomad.renderShowsGrouped = async function() {
+  const state = {
+    sizeKey: "nomadshowSize",
+    sortKey: "nomadshowSort",
+    size: localStorage.getItem("nomadshowSize") || "medium",
+    sort: localStorage.getItem("nomadshowSort") || "nameAsc",
+    q: "",
+    currentSeries: new URLSearchParams(location.search).get("series") || null,
+    seriesMap: new Map(),   // name -> { name, cover, episodes[] }
+    seriesList: [],
+    filteredSeries: [],
+    filteredEpisodes: [],
+  };
+
+  // toolbar
+  const input = $("#searchInput");
+  if (input) {
+    let t; input.addEventListener("input", e => {
+      clearTimeout(t);
+      t = setTimeout(() => { state.q = (e.target.value||"").trim().toLowerCase(); paint(); }, 150);
+    });
+  }
+  const sort = $("#sortSelect");
+  if (sort) {
+    sort.value = state.sort;
+    sort.addEventListener("change", () => {
+      state.sort = sort.value; localStorage.setItem(state.sortKey, state.sort); paint();
+    });
+  }
+  document.querySelectorAll(".view-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.size === state.size);
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".view-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.size = btn.dataset.size || "medium";
+      localStorage.setItem(state.sizeKey, state.size);
+      paint();
+    });
+  });
+
+  // data
+  const db   = await fetchDB();
+  const all  = filterByCategory(normalizeItems(db), "show"); // strict origin: shows only
+
+  // group into series
+  const seriesPoster = name => `/Shows/${encodeURIComponent(name)}.jpg`;
+  for (const it of all) {
+    const s = it.series || null;
+    if (!s) continue;
+    if (!state.seriesMap.has(s)) state.seriesMap.set(s, { name: s, cover: seriesPoster(s), episodes: [] });
+    state.seriesMap.get(s).episodes.push(it);
+  }
+  state.seriesList = Array.from(state.seriesMap.values())
+    .map(x => ({ name: x.name, cover: x.cover, count: x.episodes.length }))
+    .sort((a,b) => state.sort === "nameDesc" ? ncmp(b.name, a.name) : ncmp(a.name, b.name));
+
+  // modals
+  const actionModal = ensureActionModal();
+  const viewBtn     = $("#viewButton");
+  const downloadBtn = $("#downloadButton");
+  const vModal  = ensureVideoModal();
+  const vTitle  = $("#videoModal .title");
+  const vClose  = $("#videoModal .titlebar button");
+  const vPlayer = $("#videoPlayer");
+  actionModal.addEventListener("click", e => { if (e.target === actionModal) actionModal.classList.remove("open"); });
+  vModal.addEventListener("click", e => { if (e.target === vModal) { vPlayer.pause(); vModal.classList.remove("open"); } });
+  vClose && vClose.addEventListener("click", () => { vPlayer.pause(); vModal.classList.remove("open"); });
+
+  // breadcrumb line
+  function ensureCrumb() {
+    let bar = $("#showsCrumb");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "showsCrumb";
+      bar.style.cssText = "margin:8px 0 6px 0; opacity:.9;";
+      const container = document.querySelector(".container") || document.body;
+      container.insertBefore(bar, container.firstChild);
+    }
+    return bar;
+  }
+
+  function applyFilters() {
+    const q = state.q;
+    if (!state.currentSeries) {
+      state.filteredSeries = !q ? state.seriesList : state.seriesList.filter(s => s.name.toLowerCase().includes(q));
+    } else {
+      const eps = state.seriesMap.get(state.currentSeries)?.episodes || [];
+      const sorted = eps.slice().sort((a,b) => state.sort === "nameDesc" ? ncmp(titleFrom(b), titleFrom(a)) : ncmp(titleFrom(a), titleFrom(b)));
+      state.filteredEpisodes = !q ? sorted : sorted.filter(it => (titleFrom(it) + " " + it.path).toLowerCase().includes(q));
+    }
+  }
+
+  function paint() {
+    applyFilters();
+    const grid = $("#grid");
+    if (!grid) return;
+    grid.classList.remove("small","medium","large");
+    grid.classList.add(state.size);
+
+    if (!state.currentSeries) {
+      // series grid
+      const list = state.filteredSeries;
+      applyCount(list.length);
+      grid.innerHTML = list.map(s => `
+        <a class="card" href="?series=${encodeURIComponent(s.name)}" data-series="${s.name}">
+          <img loading="lazy" src="${s.cover}" onerror="this.onerror=null;this.src='${PLACEHOLDER}'" alt="">
+          <div class="title">${s.name} <span style="opacity:.7">(${s.count})</span></div>
+        </a>`).join("");
+      const crumb = ensureCrumb();
+      crumb.innerHTML = "";
+      grid.querySelectorAll(".card").forEach(card => {
+        card.addEventListener("click", ev => {
+          ev.preventDefault();
+          const name = card.dataset.series;
+          state.currentSeries = name;
+          const url = new URL(location.href); url.searchParams.set("series", name); history.replaceState(null, "", url);
+          paint();
+        });
+      });
+    } else {
+      // episode grid
+      const eps = state.filteredEpisodes;
+      applyCount(eps.length);
+      const sCover = `/Shows/${encodeURIComponent(state.currentSeries)}.jpg`;
+      grid.innerHTML = eps.map(it => {
+        const label = titleFrom(it);
+        const thumb = it.cover || guessCoverFromPath(it.path) || sCover;
+        return `
+          <a class="card" href="${it.path}" data-title="${label}">
+            <img loading="lazy" src="${thumb}" onerror="this.onerror=null;this.src='${PLACEHOLDER}'" alt="">
+            <div class="title">${label}</div>
+          </a>`;
+      }).join("");
+
+      const crumb = ensureCrumb();
+      crumb.innerHTML = `<a href="#" id="backSeries">← All Shows</a> &nbsp; <span style="opacity:.8">/</span> &nbsp; <strong>${state.currentSeries}</strong>`;
+      const back = $("#backSeries");
+      back && back.addEventListener("click", ev => {
+        ev.preventDefault();
+        state.currentSeries = null;
+        const url = new URL(location.href); url.searchParams.delete("series"); history.replaceState(null, "", url);
+        paint();
+      });
+
+      grid.querySelectorAll(".card").forEach(card => {
+        card.addEventListener("click", ev => {
+          ev.preventDefault();
+          const href  = card.getAttribute("href");
+          const title = card.dataset.title || card.querySelector(".title")?.textContent || fileName(href);
+          actionModal.classList.add("open");
+          viewBtn.onclick = () => {
+            actionModal.classList.remove("open");
+            if (vTitle) vTitle.textContent = `${state.currentSeries} · ${title}`;
+            const src = mediaUrl(href);
+            vModal.classList.add("open");
+            attachStallWatcher(vPlayer, src);
+            vPlayer.src = src; vPlayer.play().catch(()=>{});
+          };
+          downloadBtn.onclick = () => {
+            actionModal.classList.remove("open");
+            const a = document.createElement("a");
+            a.href = downloadUrl(href);
+            a.download = title || "episode";
+            a.click();
+          };
+        });
+      });
+    }
+  }
+
+  paint();
+};
+
+/* =========================
+   Debug overlay (?debug=1) + simple validator
    ========================= */
 (function DebugOverlay(){
   const qs = new URLSearchParams(location.search);
@@ -651,9 +802,16 @@ window.Nomad.renderWithControls = async function(kind, { mode = "grid" } = {}) {
       const ok = r.ok ? "200 OK" : r.status + " " + r.statusText;
       const db = await r.json();
       const items = normalizeItems(db);
-      const cat = t => filterByCategory(items, t).length;
+      const c = t => filterByCategory(items, t).length;
+
+      // simple warnings: images inside movies, etc.
+      const warn = [];
+      (db.movies || []).forEach(m => { const p = (m.path||m.file||"").toLowerCase(); if (IMAGE_EXTS.has(ext(p))) warn.push("image in movies: " + (m.title||m.name||p)); });
+      (db.books || []).forEach(b => { const p = (b.path||b.file||"").toLowerCase(); if (isVideo(p) || isAudio(p)) warn.push("non-book in books: " + (b.title||b.name||p)); });
+
       document.getElementById("ndg-status").innerText =
-        `media.json: ${ok}\nitems: ${items.length}\nmovies: ${cat("movie")}\nshows: ${cat("show")}\nmusic: ${cat("music")}\nimages: ${cat("image")}`;
+        `media.json: ${ok}\nitems: ${items.length}\nmovies: ${c("movie")}\nshows: ${c("show")}\nmusic: ${c("music")}\nimages: ${c("image")}\nbooks: ${c("book")}\nfiles: ${c("file")}\n` +
+        (warn.length ? ("\nWARNINGS:\n- " + warn.join("\n- ")) : "");
     } catch (e) {
       document.getElementById("ndg-status").innerText = "ERR: " + (e.message || e);
     }
