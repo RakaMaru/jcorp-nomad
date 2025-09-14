@@ -57,7 +57,10 @@ if /I "%PRCHOICE%"=="Y" (
 
 REM --------------------------------------------------
 REM NEW sync block to ensure dev and main are aligned
+<<<<<<< HEAD
 REM (mirrors the manual steps you ran)
+=======
+>>>>>>> 0484b5c (Update README.md and gh-dev-to-main-commit.bat)
 REM --------------------------------------------------
 echo.
 echo === Syncing local main with origin/main...
@@ -78,11 +81,19 @@ git status
 echo.
 echo ✅ Dev and Main are fully synced with origin!
 
+<<<<<<< HEAD
+=======
+REM Always end on dev (even if someone edits the block above later)
+git checkout dev >nul 2>&1
+
+>>>>>>> 0484b5c (Update README.md and gh-dev-to-main-commit.bat)
 :done
 echo Done.
+endlocal
 exit /b 0
 
 :fail
 echo/
 echo ERROR: a command failed. Aborting.
+endlocal
 exit /b 1
