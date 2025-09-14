@@ -345,6 +345,122 @@ Check out the full build guide on **Instructables** for detailed instructions, p
 
 ---
 
+
+---
+
+## Poster Auto-Download (`make_posters.py`)
+
+The `make_posters.py` script scans your media folders for video files and creates a **matching `.jpg` poster** for each file using **TMDb**. It supports both **Movies** and **TV episodes**, and is designed to be a drop-in tool.
+
+### What it does
+
+- Scans recursively for video files: `.mp4`, `.mkv`, `.avi`, `.m4v`
+- Creates a poster next to each video with the same base name and `.jpg` extension
+- Fetches real posters from TMDb using your API key:
+  - **Movies:** `Title (YYYY).ext` or `Title [YYYY].ext`
+  - **TV episodes:** `Show.Name.S01E02.ext`, `Show Name - S01E02.ext`, etc. (series poster is applied to episodes)
+- Strips non-year tags like `[Extended]`, `(Director's Cut)` before searching TMDb
+- **Never generates placeholders** — real posters only
+- Works as dry-run without a key; real runs require a TMDb key
+
+### Requirements
+
+- Python 3.x
+- Dependencies (install with pip):
+  ```bash
+  python -m pip install pillow requests
+  ```
+
+### Configuration
+
+Create a `make_posters.json` file next to `make_posters.py` with your TMDb API key:
+
+```json
+{
+  "TMDB_API_KEY": "your_api_key_here"
+}
+```
+
+Without this file, dry-run still works, but real runs will exit with instructions.
+
+### Usage
+
+From the root of your media (or pass a path):
+
+```bash
+# Scan current folder
+python make_posters.py
+
+# Scan a specific folder
+python make_posters.py Movies
+
+# Preview only (no files written)
+python make_posters.py Movies --dry-run
+
+# Overwrite existing JPGs
+python make_posters.py Movies --overwrite
+
+# Include/Exclude top-level folders
+python make_posters.py . --only-folders Movies,Shows
+python make_posters.py . --exclude-folders Samples,Extras
+
+# Set language for TMDb results
+python make_posters.py Movies --lang en-US
+```
+
+### Filename patterns recognized
+
+- Movies:  
+  - `Title (2010).mp4`  
+  - `Title [2010].mkv`  
+  - Or place files in a folder that contains `(2010)` or `[2010]` in its name
+
+- TV Episodes:  
+  - `Show.Name.S01E02.ext`  
+  - `Show Name - S01E02.ext`  
+  - Flexible separators supported
+
+### Example workflows
+
+**Generate all movie posters:**
+```bash
+cd SD_Card_Template
+python make_posters.py Movies
+```
+
+**Generate episode posters for one show:**
+```bash
+python make_posters.py "SD_Card_Template/Shows/Girls Last Tour/Season 01"
+```
+
+**One-shot pass for Movies + Shows:**
+```bash
+python make_posters.py SD_Card_Template --only-folders Movies,Shows
+```
+
+**Sanity check before running:**
+```bash
+python make_posters.py SD_Card_Template --dry-run
+```
+
+### Troubleshooting
+
+- **Missing dependencies:**  
+  Install with `python -m pip install pillow requests`
+
+- **Config error (no API key):**  
+  Ensure `make_posters.json` exists with your key
+
+- **No match errors:**  
+  Ensure filenames include a year or are placed in a folder with `(YYYY)` or `[YYYY]`
+
+### Roadmap (Nomad integration)
+
+- Move TMDb key into `config/settings.json` (managed via admin screen)
+- Add admin UI controls to run poster scans
+- Optionally generate `folder.jpg` per season/show for Plex/Jellyfin compatibility
+
+
 ## License
 
 This project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).

@@ -1,6 +1,6 @@
 ============================================================
 File list for: C:\common\Arduino\jcorp-nomad
-Generated on : Sun 09/07/2025 14:45:47.31
+Generated on : Sat 09/13/2025 20:54:45.65
 Script       : gh-filelist.bat
 ============================================================
 
@@ -122,9 +122,10 @@ C:\common\Arduino\jcorp-nomad\SD_Card_Template\Files
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\files.html
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Gallery
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\gallery.html
-C:\common\Arduino\jcorp-nomad\SD_Card_Template\games.html
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\index.html
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Logo.png
+C:\common\Arduino\jcorp-nomad\SD_Card_Template\make_posters.json
+C:\common\Arduino\jcorp-nomad\SD_Card_Template\make_posters.py
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\media.json
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\menu.html
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Movies
@@ -198,4 +199,4 @@ C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show\S01Ep02 - 
 
 [TOTALS  (EXCLUDES .git)]
 Directories: 18
-Files      : 147
+Files      : 148
