@@ -1,7 +1,9 @@
 @echo off
 setlocal EnableExtensions
 
-REM Ensure we're on dev
+REM --------------------------------------------------
+REM Ensure we're on dev (switch only if not already)
+REM --------------------------------------------------
 for /f "delims=" %%b in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "BRANCH=%%b"
 if /I not "%BRANCH%"=="dev" (
   echo Switching to dev...
@@ -11,15 +13,19 @@ if /I not "%BRANCH%"=="dev" (
 echo Fetching origin...
 git fetch origin || goto :fail
 
-REM Fast-forward dev with main if possible
+REM --------------------------------------------------
+REM Fast-forward dev with origin/main if possible (no merges)
+REM --------------------------------------------------
 echo Merging origin/main into dev ^(fast-forward if possible^)...
 git merge --ff-only origin/main >nul 2>&1
 if errorlevel 1 (
-  REM Either already up to date or not fast-forward; try a visible run for messages
+  REM Either already up to date or not fast-forward; try visible for messages
   git merge --ff-only origin/main
 )
 
+REM --------------------------------------------------
 REM Commit message (arg1 or prompt)
+REM --------------------------------------------------
 set "MSG=%~1"
 if not defined MSG (
   echo/
@@ -39,7 +45,18 @@ git commit -m "%MSG%" || echo Nothing to commit.
 echo Pushing to origin/dev...
 git push origin dev || goto :fail
 
+REM --------------------------------------------------
+REM If dev has nothing ahead of main, skip PR and just sync
+REM --------------------------------------------------
+for /f %%c in ('git rev-list --count main..dev') do set AHEAD=%%c
+if "%AHEAD%"=="0" (
+  echo No commits between dev and main; skipping PR step.
+  goto sync_block
+)
+
+REM --------------------------------------------------
 REM Optional PR step: pass -y as arg2 to auto-approve
+REM --------------------------------------------------
 set "AUTOFLAG=%~2"
 set "PRCHOICE="
 if /I "%AUTOFLAG%"=="-y" (
@@ -53,15 +70,14 @@ if /I "%PRCHOICE%"=="Y" (
   gh pr create --base main --head dev --title "%MSG%" --body "%MSG%" || goto :fail
   echo Attempting merge...
   gh pr merge --merge || goto :fail
+) else (
+  echo Skipping PR/merge by user choice.
 )
 
 REM --------------------------------------------------
-REM NEW sync block to ensure dev and main are aligned
-<<<<<<< HEAD
-REM (mirrors the manual steps you ran)
-=======
->>>>>>> 0484b5c (Update README.md and gh-dev-to-main-commit.bat)
+REM Sync both branches and finish on dev
 REM --------------------------------------------------
+:sync_block
 echo.
 echo === Syncing local main with origin/main...
 git checkout main || goto :fail
@@ -81,19 +97,17 @@ git status
 echo.
 echo ✅ Dev and Main are fully synced with origin!
 
-<<<<<<< HEAD
-=======
-REM Always end on dev (even if someone edits the block above later)
-git checkout dev >nul 2>&1
-
->>>>>>> 0484b5c (Update README.md and gh-dev-to-main-commit.bat)
 :done
 echo Done.
+REM Ensure we end on dev even if a future edit reorders steps
+git checkout dev >nul 2>&1
 endlocal
 exit /b 0
 
 :fail
 echo/
 echo ERROR: a command failed. Aborting.
+REM Try to get you back on dev if possible
+git checkout dev >nul 2>&1
 endlocal
 exit /b 1
