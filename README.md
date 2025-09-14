@@ -15,7 +15,7 @@ Stream movies, music, books, and shows anywhere — no internet required.</p>
 
 ---
 
-## Known Working Versions (Tested)
+## Known Working Library Versions (Tested)
 
 The following library and core versions are confirmed to compile and run correctly with Nomad:
 
@@ -68,16 +68,9 @@ Encoding video files using **H.264** video codec and **AAC** audio codec tends t
 
 ---
 
-## Known Issues (Being Worked On)
-
-- Large directories (80+ GB) can cause the admin file browser to crash when opened.  
-- Some bugs remain with SD Card storage reading on both the Screen UI and the admin panel.
-
-These issues are actively being addressed and will be fixed in upcoming releases.
-
----
-
 ## New Store and Promo Videos
+
+Original project (kept these links intact): https://github.com/Jstudner/jcorp-nomad
 
 You can now **buy your own Nomad Dev Kit** and get started immediately!  
 The product is open source, but this saves you time and effort on assembly.
@@ -93,84 +86,6 @@ The product is open source, but this saves you time and effort on assembly.
 
 ---
 
-## Polish Update Disclaimer
-
-This is a major update focused on **polish, stability, and usability improvements**.  
-It includes:
-
-- Full cleanup of reported bugs  
-- Improved user interface  
-- Rebuilt admin panel  
-- New features across every section  
-- All configuration options now available in the **frontend** — no need to modify firmware to change settings  
-- Greatly enhanced file and media support  
-
----
-
-## New Features in the Polish Update
-
-### Music Page
-
-- Song downloads  
-- Loop songs  
-- Sort songs A–Z  
-- Shuffle songs and playlists  
-- Playlist support via subfolders (flexible usage)  
-- Playlists loop automatically  
-- Expanded file type support: tested with `.mp3`, `.wav`, and `.flac` (others may work, untested)
-
-### Books Page
-
-- EPUB support added (no web reader yet, but download works)  
-- Fixed footer CSS display issue
-
-### Admin Panel (Completely Rebuilt)
-
-- Restart the device directly from the panel  
-- Switch to USB Mass Storage Mode with one click  
-- SD card usage tracking with visual indicators  
-- Control RGB LED color and mode  
-- Change or disable the admin password (default is "password")  
-- Change Wi-Fi SSID and password  
-- Set device brightness (off option coming soon)  
-- Toggle `media.json` auto-generation on boot  
-- Generate `media.json` manually  
-- Display connected Wi-Fi info and number of connected users  
-- Integrated file system browser with jQueryFileTree (upload, delete, rename, download, create folder, inline editing)
-
-### Gallery Page (New)
-
-- Displays images with basic zoom functionality  
-- Video playback support  
-- Sortable display grid
-
-### Files Page (New)
-
-- Store and download any file type  
-- Limited to FAT32 max file size (4 GB)  
-- Useful for firmware, PDFs, and other non-media files
-
-### Interface + UI Improvements
-
-- LCD clearly shows USB Mass Storage Mode  
-- Real-time file progress shown on screen during `media.json` generation  
-- More intuitive screen feedback during long operations
-
-### File Type & Playback Support
-
-- Improved video file detection and browser compatibility  
-- Works with most browser-supported video types  
-- Unsupported files fall back to download behavior
-
-### Admin Access Notes
-
-- New "Settings" button leads to Admin Panel  
-- Admin Password disabled by default  
-- If locked out, inspect (F12) the overlay and delete it manually  
-- Settings persist across reboots
-
----
-
 ## What is Nomad
 
 Jcorp Nomad is an open-source offline media server built for travel, remote work, classrooms, camping, and more. It runs entirely on an ESP32-S3 dev board, creates a local Wi-Fi hotspot, and serves media through a browser-accessible interface. It does not require internet access and works similarly to in-flight entertainment systems. It also allows multiple users watching separate media streams at the same time. 
@@ -181,29 +96,8 @@ This project is designed to be compact, simple, and easily modifiable. It includ
 
 ## Project Inspiration
 
-This project was inspired by my experience running a Jellyfin server at home. I love having full control over my media library, and Jellyfin gave me everything I wanted > streaming movies, shows, books, and music, all from my own hardware. Naturally, I started looking for ways to take that experience on the go.
-
-My first thought was to build a portable server, but I quickly ran into some major hurdles:
-
-- Power-hungry hardware — Even low-power x86 boxes needed a hefty battery setup to stay running for long trips.
-- High cost — SBCs like the Raspberry Pi 4, plus power banks, USB storage, and screen interfaces added up quickly.
-- Heat and reliability — Trying to cram a full stack of services into a compact case often led to thermal issues and instability when running software meant for server hardware.
-
-That’s when I pivoted.
-
-Instead of replicating a full home media server, I focused on delivering the core experience:
-
-- Offline access
-- Local Wi-Fi hotspot
-- Simple media browsing and playback
-- Support for multiple users
-
-The ESP32-S3 offered just enough performance to handle all of that - with a fraction of the power draw and cost.  
-The result is Nomad: a minimalist, reliable, and low-cost media server that delivers the essential features of a home streaming setup in a smaller than pocket sized format.
-
-Is it fancy? No.  
-Does it work? Absolutely.  
-And it’s open-source, so anyone can expand, improve, and adapt it for their own needs.
+This project was originally cloned from the hard work of:
+https://github.com/Jstudner/jcorp-nomad
 
 ---
 
@@ -223,6 +117,8 @@ And it’s open-source, so anyone can expand, improve, and adapt it for their ow
 
 **Disclaimer:**  
 The following links are Amazon affiliate links. Purchasing through these links supports this project at no additional cost to you. Thank you for your support!
+
+Original project (kept affiliate links): https://github.com/Jstudner/jcorp-nomad
 
 - **Waveshare ESP32-S3 Dev Board (1.47" LCD version)**  
   [https://amzn.to/4ktB6oT](https://amzn.to/4ktB6oT)
@@ -343,7 +239,122 @@ Check out the full build guide on **Instructables** for detailed instructions, p
 
 👉 [Read the Instructables Guide](https://www.instructables.com/Jcorp-Nomad-Mini-WIFI-Media-Server/) 
 
+Kept from: https://github.com/Jstudner/jcorp-nomad
+
 ---
+
+## Poster Auto-Download (`make_posters.py`)
+
+The `make_posters.py` script scans your media folders for video files and creates a **matching `.jpg` poster** for each file using **TMDb**. It supports both **Movies** and **TV episodes**, and is designed to be a drop-in tool.
+
+### What it does
+
+- Scans recursively for video files: `.mp4`, `.mkv`, `.avi`, `.m4v`
+- Creates a poster next to each video with the same base name and `.jpg` extension
+- Fetches real posters from TMDb using your API key:
+  - **Movies:** `Title (YYYY).ext` or `Title [YYYY].ext`
+  - **TV episodes:** `Show.Name.S01E02.ext`, `Show Name - S01E02.ext`, etc. (series poster is applied to episodes)
+- Strips non-year tags like `[Extended]`, `(Director's Cut)` before searching TMDb
+- **Never generates placeholders** — real posters only
+- Works as dry-run without a key; real runs require a TMDb key
+
+### Requirements
+
+- Python 3.x
+- Dependencies (install with pip):
+  ```bash
+  python -m pip install pillow requests
+  ```
+
+### Configuration
+
+Create a `make_posters.json` file next to `make_posters.py` with your TMDb API key:
+
+```json
+{
+  "TMDB_API_KEY": "your_api_key_here"
+}
+```
+
+Without this file, dry-run still works, but real runs will exit with instructions.
+
+### Usage
+
+From the root of your media (or pass a path):
+
+```bash
+# Scan current folder
+python make_posters.py
+
+# Scan a specific folder
+python make_posters.py Movies
+
+# Preview only (no files written)
+python make_posters.py Movies --dry-run
+
+# Overwrite existing JPGs
+python make_posters.py Movies --overwrite
+
+# Include/Exclude top-level folders
+python make_posters.py . --only-folders Movies,Shows
+python make_posters.py . --exclude-folders Samples,Extras
+
+# Set language for TMDb results
+python make_posters.py Movies --lang en-US
+```
+
+### Filename patterns recognized
+
+- Movies:  
+  - `Title (2010).mp4`  
+  - `Title [2010].mkv`  
+  - Or place files in a folder that contains `(2010)` or `[2010]` in its name
+
+- TV Episodes:  
+  - `Show.Name.S01E02.ext`  
+  - `Show Name - S01E02.ext`  
+  - Flexible separators supported
+
+### Example workflows
+
+**Generate all movie posters:**
+```bash
+cd SD_Card_Template
+python make_posters.py Movies
+```
+
+**Generate episode posters for one show:**
+```bash
+python make_posters.py "SD_Card_Template/Shows/Girls Last Tour/Season 01"
+```
+
+**One-shot pass for Movies + Shows:**
+```bash
+python make_posters.py SD_Card_Template --only-folders Movies,Shows
+```
+
+**Sanity check before running:**
+```bash
+python make_posters.py SD_Card_Template --dry-run
+```
+
+### Troubleshooting
+
+- **Missing dependencies:**  
+  Install with `python -m pip install pillow requests`
+
+- **Config error (no API key):**  
+  Ensure `make_posters.json` exists with your key
+
+- **No match errors:**  
+  Ensure filenames include a year or are placed in a folder with `(YYYY)` or `[YYYY]`
+
+### Roadmap (Nomad integration)
+
+- Move TMDb key into `config/settings.json` (managed via admin screen)
+- Add admin UI controls to run poster scans
+- Optionally generate `folder.jpg` per season/show for Plex/Jellyfin compatibility
+
 
 ## License
 

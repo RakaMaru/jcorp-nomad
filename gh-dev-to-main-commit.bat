@@ -55,6 +55,29 @@ if /I "%PRCHOICE%"=="Y" (
   gh pr merge --merge || goto :fail
 )
 
+REM --------------------------------------------------
+REM NEW sync block to ensure dev and main are aligned
+REM (mirrors the manual steps you ran)
+REM --------------------------------------------------
+echo.
+echo === Syncing local main with origin/main...
+git checkout main || goto :fail
+git pull origin main || goto :fail
+
+echo.
+echo === Syncing dev with main...
+git checkout dev || goto :fail
+git merge main || goto :fail
+git push origin dev || goto :fail
+
+echo.
+echo === Final status check ===
+git log --oneline --decorate -n 5
+git status
+
+echo.
+echo ✅ Dev and Main are fully synced with origin!
+
 :done
 echo Done.
 exit /b 0
