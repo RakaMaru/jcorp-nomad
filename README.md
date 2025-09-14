@@ -15,20 +15,20 @@ Stream movies, music, books, and shows anywhere — no internet required.</p>
 
 ---
 
-## Known Working Versions (Tested)
+## Major Update: Experimental Features Merged Into Main
 
-The following library and core versions are confirmed to compile and run correctly with Nomad:
+The **latest update** moves the majority of polished experimental branch features into the `main` branch!  
+This means a more stable, refined experience for everyone with all the new goodies tested and ready.
 
-- **ArduinoJson** by Benoit Blanchon — **7.4.2**
-- **ESP Async WebServer** by ESP32Async — **3.8.0**
-- **AsyncTCP** by ESP32Async — **3.4.7**
-- **LVGL** by kisvegabor — **8.4.0**  
-  *(Nomad UI is built with SquareLine Studio for LVGL 8; LVGL 9.x requires major code changes)*
-- **Arduino_GFX_Library** — **1.6.1**
-- **ESP32 Core (esp32 by Espressif Systems)** — **3.3.0**
-- **Arduino IDE** — **2.3.6**
-
-These versions represent a stable, tested baseline. Future updates may work, but for reliability stick to the versions above unless you’re actively migrating.
+This version also fixed the library errors. You must install the following libraraies in the manager.
+  
+  "ArduinoJson" by Benoit Blanchon v7.3.0
+  
+  "Async TCP" by ESP32Async v3.4.7
+  
+  "ESP Async Webserver" by ESP32Async v3.7.1
+  
+  "LVGL" by kisvegabor v8.4.0
 
 ---
 
@@ -38,10 +38,9 @@ A compatibility guide for supported media types, streaming expectations, and add
 
 | Category      | Supported Formats                    | Notes                                                                                   |
 |---------------|------------------------------------|-----------------------------------------------------------------------------------------|
-| **Video**     | `.mp4`, `.mov`, `.mkv`, `.webm`, `.avi`, `.m4v` | `.avi` files may not play reliably in all browsers.                                     |
-| **Audio**     | `.mp3`, `.flac`, `.wav`, `.ogg`     | Other audio formats are **not supported** by the built-in player.                       |
+| **Video**     | `.mp4`, `.mov`, `.mkv`, `.webm`   | Reliable playback for these formats. `.avi` and `.flv` are **not supported**.           |
+| **Audio**     | `.mp3`, `.flac`, `.wav`             | Other audio formats are **not supported** by the built-in player.                       |
 | **Books / Docs** | `.pdf` (recommended), `.epub` (download only) | `.pdf` files can be opened and read directly in the browser. `.epub` files are downloadable but cannot be viewed in the built-in reader. |
-| **Images**    | `.jpg`, `.png`                      | Used for covers, gallery images, and folder artwork.                                    |
 
 **Important:** Nomad uses FAT32 storage by default, which limits individual file sizes to under 4 GB.
 
@@ -68,12 +67,33 @@ Encoding video files using **H.264** video codec and **AAC** audio codec tends t
 
 ---
 
+
 ## Known Issues (Being Worked On)
 
 - Large directories (80+ GB) can cause the admin file browser to crash when opened.  
 - Some bugs remain with SD Card storage reading on both the Screen UI and the admin panel.
 
 These issues are actively being addressed and will be fixed in upcoming releases.
+
+---
+
+## Future Plans
+
+Here’s what’s coming next for Nomad:
+
+- **Custom JS Content Players:**  
+  Rebuild the video, audio, and ebook players with custom JavaScript libraries to enable:  
+  - Better video support including multiple audio tracks and subtitles  
+  - Proper EPUB support with in-browser reading  
+  - CBX/CBZ comic book support with better navigation  
+
+- **Custom Emojis and Icons:**  
+  Devices currently recolor default emojis used in the UI inconsistently. Custom emojis/icons will provide consistent branding and better UX.
+
+- **Advanced Caching System:**  
+  A complex browser-side caching mechanism to:  
+  - Track progress of media playback (movies, shows)  
+  - Offer "resume where you left off" options for the last 5 watched items
 
 ---
 
@@ -92,6 +112,8 @@ The product is open source, but this saves you time and effort on assembly.
 [https://nomad.jcorptech.net](https://nomad.jcorptech.net)
 
 ---
+
+<!-- Existing README content continues below -->
 
 ## Polish Update Disclaimer
 
@@ -165,28 +187,30 @@ It includes:
 ### Admin Access Notes
 
 - New "Settings" button leads to Admin Panel  
-- Admin Password disabled by default  
+- Admin Password disabled by default
 - If locked out, inspect (F12) the overlay and delete it manually  
 - Settings persist across reboots
 
 ---
 
+
 ## What is Nomad
 
-Jcorp Nomad is an open-source offline media server built for travel, remote work, classrooms, camping, and more. It runs entirely on an ESP32-S3 dev board, creates a local Wi-Fi hotspot, and serves media through a browser-accessible interface. It does not require internet access and works similarly to in-flight entertainment systems. It also allows multiple users watching separate media streams at the same time. 
+Jcorp Nomad is an open-source offline media server built for travel, remote work, classrooms, camping, and more. It runs entirely on an ESP32-S3 dev board, creates a local Wi-Fi hotspot, and serves media through a browser-accessible interface. It does not require internet access and works similarly to in-flight entertainment systems. It also allows multiple users watching seperate media streams at the same time. 
 
 This project is designed to be compact, simple, and easily modifiable. It includes optional 3D-printable hardware and a fully open source firmware and web interface.
 
 ---
 
 ## Project Inspiration
-
 This project was inspired by my experience running a Jellyfin server at home. I love having full control over my media library, and Jellyfin gave me everything I wanted > streaming movies, shows, books, and music, all from my own hardware. Naturally, I started looking for ways to take that experience on the go.
 
 My first thought was to build a portable server, but I quickly ran into some major hurdles:
 
 - Power-hungry hardware — Even low-power x86 boxes needed a hefty battery setup to stay running for long trips.
+
 - High cost — SBCs like the Raspberry Pi 4, plus power banks, USB storage, and screen interfaces added up quickly.
+
 - Heat and reliability — Trying to cram a full stack of services into a compact case often led to thermal issues and instability when running software meant for server hardware.
 
 That’s when I pivoted.
@@ -194,15 +218,18 @@ That’s when I pivoted.
 Instead of replicating a full home media server, I focused on delivering the core experience:
 
 - Offline access
+
 - Local Wi-Fi hotspot
+
 - Simple media browsing and playback
+
 - Support for multiple users
 
-The ESP32-S3 offered just enough performance to handle all of that - with a fraction of the power draw and cost.  
+The ESP32-S3 offered just enough performance to handle all of that - with a fraction of the power draw and cost.
 The result is Nomad: a minimalist, reliable, and low-cost media server that delivers the essential features of a home streaming setup in a smaller than pocket sized format.
 
-Is it fancy? No.  
-Does it work? Absolutely.  
+Is it fancy? No.
+Does it work? Absolutely.
 And it’s open-source, so anyone can expand, improve, and adapt it for their own needs.
 
 ---
@@ -219,6 +246,7 @@ And it’s open-source, so anyone can expand, improve, and adapt it for their ow
 
 ---
 
+
 ## Hardware Requirements
 
 **Disclaimer:**  
@@ -230,7 +258,7 @@ The following links are Amazon affiliate links. Purchasing through these links s
 - **FAT32-formatted microSD card (16 GB minimum recommended, 64 GB preferred)**  
   [https://amzn.to/44tM1c4](https://amzn.to/44tM1c4)
 
-- **SD-Card Extender** Not needed, but useful for the latest case version, lets you get to the SD card without disasembly.  
+- **SD-Card Extender** Not needed, but useful for the latest case version, lets you get to the SD card without disasembly. 
   [https://amzn.to/45IWIJz](https://amzn.to/45IWIJz)
 
 - **USB power source** (e.g., battery bank or computer)
@@ -295,10 +323,10 @@ favicon.ico
 
 ## Supported Formats
 
-- Video: `.mp4`, `.mov`, `.mkv`, `.webm`, `.avi` (may not play reliably), `.m4v`
-- Audio: `.mp3`, `.wav`, `.flac`, `.ogg`
-- Books: `.pdf`, `.epub`
-- Images: `.jpg`, `.png`
+- Video: `.mp4`
+- Audio: `.mp3`
+- Books: `.pdf`
+- Images: `.jpg` (used for covers and folder images only)
 
 Ensure all images and media files use matching names for proper display.
 
@@ -336,6 +364,22 @@ Topics covered include:
 
 ---
 
+## Future Plans
+
+These are features I'd like to explore in future updates. If you'd like to contribute, feel free to fork the repo or open a pull request!
+
+
+### Offline Maps with GPS Support
+Inspired by [Backcountry Beacon](https://www.instructables.com/USB-Powered-Offline-Map-Server/), the goal is to serve cached map tiles and display the live GPS position from the user's phone or connected device — entirely offline.
+
+### HTML5 Games
+Similar to [Gams Offline](https://github.com/Gams-Offline/Gams), I would like to embed simple HTML5 games that work in-browser. The selection in Gams is amazing and make me think of cool math games, would be neat to have even though most require a keyboard.
+
+### Audiobook-Friendly Mode
+Improve playback for long-form audio by adding bookmarks, chapter display, and smart pause/resume. Intended for better audiobook handling in the Music section. Potentialy add an entire new audiobook section or a seperate handling system for it in books (Under read it could have a listen option).
+
+---
+
 ## Build Guide on Instructables
 
 Looking for a step-by-step tutorial?  
@@ -345,122 +389,6 @@ Check out the full build guide on **Instructables** for detailed instructions, p
 
 ---
 
-
----
-
-## Poster Auto-Download (`make_posters.py`)
-
-The `make_posters.py` script scans your media folders for video files and creates a **matching `.jpg` poster** for each file using **TMDb**. It supports both **Movies** and **TV episodes**, and is designed to be a drop-in tool.
-
-### What it does
-
-- Scans recursively for video files: `.mp4`, `.mkv`, `.avi`, `.m4v`
-- Creates a poster next to each video with the same base name and `.jpg` extension
-- Fetches real posters from TMDb using your API key:
-  - **Movies:** `Title (YYYY).ext` or `Title [YYYY].ext`
-  - **TV episodes:** `Show.Name.S01E02.ext`, `Show Name - S01E02.ext`, etc. (series poster is applied to episodes)
-- Strips non-year tags like `[Extended]`, `(Director's Cut)` before searching TMDb
-- **Never generates placeholders** — real posters only
-- Works as dry-run without a key; real runs require a TMDb key
-
-### Requirements
-
-- Python 3.x
-- Dependencies (install with pip):
-  ```bash
-  python -m pip install pillow requests
-  ```
-
-### Configuration
-
-Create a `make_posters.json` file next to `make_posters.py` with your TMDb API key:
-
-```json
-{
-  "TMDB_API_KEY": "your_api_key_here"
-}
-```
-
-Without this file, dry-run still works, but real runs will exit with instructions.
-
-### Usage
-
-From the root of your media (or pass a path):
-
-```bash
-# Scan current folder
-python make_posters.py
-
-# Scan a specific folder
-python make_posters.py Movies
-
-# Preview only (no files written)
-python make_posters.py Movies --dry-run
-
-# Overwrite existing JPGs
-python make_posters.py Movies --overwrite
-
-# Include/Exclude top-level folders
-python make_posters.py . --only-folders Movies,Shows
-python make_posters.py . --exclude-folders Samples,Extras
-
-# Set language for TMDb results
-python make_posters.py Movies --lang en-US
-```
-
-### Filename patterns recognized
-
-- Movies:  
-  - `Title (2010).mp4`  
-  - `Title [2010].mkv`  
-  - Or place files in a folder that contains `(2010)` or `[2010]` in its name
-
-- TV Episodes:  
-  - `Show.Name.S01E02.ext`  
-  - `Show Name - S01E02.ext`  
-  - Flexible separators supported
-
-### Example workflows
-
-**Generate all movie posters:**
-```bash
-cd SD_Card_Template
-python make_posters.py Movies
-```
-
-**Generate episode posters for one show:**
-```bash
-python make_posters.py "SD_Card_Template/Shows/Girls Last Tour/Season 01"
-```
-
-**One-shot pass for Movies + Shows:**
-```bash
-python make_posters.py SD_Card_Template --only-folders Movies,Shows
-```
-
-**Sanity check before running:**
-```bash
-python make_posters.py SD_Card_Template --dry-run
-```
-
-### Troubleshooting
-
-- **Missing dependencies:**  
-  Install with `python -m pip install pillow requests`
-
-- **Config error (no API key):**  
-  Ensure `make_posters.json` exists with your key
-
-- **No match errors:**  
-  Ensure filenames include a year or are placed in a folder with `(YYYY)` or `[YYYY]`
-
-### Roadmap (Nomad integration)
-
-- Move TMDb key into `config/settings.json` (managed via admin screen)
-- Add admin UI controls to run poster scans
-- Optionally generate `folder.jpg` per season/show for Plex/Jellyfin compatibility
-
-
 ## License
 
 This project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
@@ -469,14 +397,17 @@ You may remix, adapt, and share this project **for non-commercial use**, as long
 
 For commercial licensing, please contact the author.
 
+
 ---
 
 ## Credits
 
 Developed by **Jackson Studner (Jcorp Tech)**.  
-Branch updates by **RakaMaru**.  
 Inspired by open-source offline projects like Backcountry Beacon.
 
 If you build, remix, or improve this project, please consider submitting a pull request or tagging the project.
 
 ---
+
+
+ 
