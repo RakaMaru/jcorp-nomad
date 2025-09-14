@@ -32,6 +32,114 @@ These versions represent a stable, tested baseline. Future updates may work, but
 
 ---
 
+## Poster Auto-Download (`make_posters.py`)
+
+The `make_posters.py` script scans your media folders for video files and creates a **matching `.jpg` poster** for each file using **TMDb**. It supports both **Movies** and **TV episodes**, and is designed to be a drop-in tool.
+
+### What it does
+
+- Scans recursively for video files: `.mp4`, `.mkv`, `.avi`, `.m4v`
+- Creates a poster next to each video with the same base name and `.jpg` extension
+- Fetches real posters from TMDb using your API key:
+  - **Movies:** `Title (YYYY).ext` or `Title [YYYY].ext`
+  - **TV episodes:** `Show.Name.S01E02.ext`, `Show Name - S01E02.ext`, etc. (series poster is applied to episodes)
+- Strips non-year tags like `[Extended]`, `(Director's Cut)` before searching TMDb
+- **Never generates placeholders** — real posters only
+- Works as dry-run without a key; real runs require a TMDb key
+
+### Requirements
+
+- Python 3.x
+- Dependencies (install with pip):
+  ```bash
+  python -m pip install pillow requests
+  ```
+
+### Configuration
+
+Create a `make_posters.json` file next to `make_posters.py` with your TMDb API key:
+
+```json
+{
+  "TMDB_API_KEY": "your_api_key_here"
+}
+```
+
+Without this file, dry-run still works, but real runs will exit with instructions.
+
+### Usage
+
+From the root of your media (or pass a path):
+
+```bash
+# Scan current folder
+python make_posters.py
+
+# Scan a specific folder
+python make_posters.py Movies
+
+# Preview only (no files written)
+python make_posters.py Movies --dry-run
+
+# Overwrite existing JPGs
+python make_posters.py Movies --overwrite
+
+# Include/Exclude top-level folders
+python make_posters.py . --only-folders Movies,Shows
+python make_posters.py . --exclude-folders Samples,Extras
+
+# Set language for TMDb results
+python make_posters.py Movies --lang en-US
+```
+
+### Filename patterns recognized
+
+- Movies:  
+  - `Title (2010).mp4`  
+  - `Title [2010].mkv`  
+  - Or place files in a folder that contains `(2010)` or `[2010]` in its name
+
+- TV Episodes:  
+  - `Show.Name.S01E02.ext`  
+  - `Show Name - S01E02.ext`  
+  - Flexible separators supported
+
+### Example workflows
+
+**Generate all movie posters:**
+```bash
+cd SD_Card_Template
+python make_posters.py Movies
+```
+
+**Generate episode posters for one show:**
+```bash
+python make_posters.py "SD_Card_Template/Shows/Girls Last Tour/Season 01"
+```
+
+**One-shot pass for Movies + Shows:**
+```bash
+python make_posters.py SD_Card_Template --only-folders Movies,Shows
+```
+
+**Sanity check before running:**
+```bash
+python make_posters.py SD_Card_Template --dry-run
+```
+
+### Troubleshooting
+
+- **Missing dependencies:**  
+  Install with `python -m pip install pillow requests`
+
+- **Config error (no API key):**  
+  Ensure `make_posters.json` exists with your key
+
+- **No match errors:**  
+  Ensure filenames include a year or are placed in a folder with `(YYYY)` or `[YYYY]`
+
+---
+
 ## File Compatibility & Streaming
 
 A compatibility guide for supported media types, streaming expectations, and additional notes on performance.
@@ -70,7 +178,7 @@ Encoding video files using **H.264** video codec and **AAC** audio codec tends t
 
 ## New Store and Promo Videos
 
-Original project (kept these links intact): https://github.com/Jstudner/jcorp-nomad
+Kept these links intact from original repo: https://github.com/Jstudner/jcorp-nomad
 
 You can now **buy your own Nomad Dev Kit** and get started immediately!  
 The product is open source, but this saves you time and effort on assembly.
@@ -110,28 +218,6 @@ https://github.com/Jstudner/jcorp-nomad
 - No app or internet connection required  
 - Open source firmware and UI  
 - Customizable web interface / Features
-
----
-
-## Hardware Requirements
-
-**Disclaimer:**  
-The following links are Amazon affiliate links. Purchasing through these links supports this project at no additional cost to you. Thank you for your support!
-
-Original project (kept affiliate links): https://github.com/Jstudner/jcorp-nomad
-
-- **Waveshare ESP32-S3 Dev Board (1.47" LCD version)**  
-  [https://amzn.to/4ktB6oT](https://amzn.to/4ktB6oT)
-
-- **FAT32-formatted microSD card (16 GB minimum recommended, 64 GB preferred)**  
-  [https://amzn.to/44tM1c4](https://amzn.to/44tM1c4)
-
-- **SD-Card Extender** Not needed, but useful for the latest case version, lets you get to the SD card without disasembly.  
-  [https://amzn.to/45IWIJz](https://amzn.to/45IWIJz)
-
-- **USB power source** (e.g., battery bank or computer)
-
-- **Optional:** 3D-printed enclosure (STL files included in the repository)
 
 ---
 
@@ -242,112 +328,6 @@ Check out the full build guide on **Instructables** for detailed instructions, p
 Kept from: https://github.com/Jstudner/jcorp-nomad
 
 ---
-
-## Poster Auto-Download (`make_posters.py`)
-
-The `make_posters.py` script scans your media folders for video files and creates a **matching `.jpg` poster** for each file using **TMDb**. It supports both **Movies** and **TV episodes**, and is designed to be a drop-in tool.
-
-### What it does
-
-- Scans recursively for video files: `.mp4`, `.mkv`, `.avi`, `.m4v`
-- Creates a poster next to each video with the same base name and `.jpg` extension
-- Fetches real posters from TMDb using your API key:
-  - **Movies:** `Title (YYYY).ext` or `Title [YYYY].ext`
-  - **TV episodes:** `Show.Name.S01E02.ext`, `Show Name - S01E02.ext`, etc. (series poster is applied to episodes)
-- Strips non-year tags like `[Extended]`, `(Director's Cut)` before searching TMDb
-- **Never generates placeholders** — real posters only
-- Works as dry-run without a key; real runs require a TMDb key
-
-### Requirements
-
-- Python 3.x
-- Dependencies (install with pip):
-  ```bash
-  python -m pip install pillow requests
-  ```
-
-### Configuration
-
-Create a `make_posters.json` file next to `make_posters.py` with your TMDb API key:
-
-```json
-{
-  "TMDB_API_KEY": "your_api_key_here"
-}
-```
-
-Without this file, dry-run still works, but real runs will exit with instructions.
-
-### Usage
-
-From the root of your media (or pass a path):
-
-```bash
-# Scan current folder
-python make_posters.py
-
-# Scan a specific folder
-python make_posters.py Movies
-
-# Preview only (no files written)
-python make_posters.py Movies --dry-run
-
-# Overwrite existing JPGs
-python make_posters.py Movies --overwrite
-
-# Include/Exclude top-level folders
-python make_posters.py . --only-folders Movies,Shows
-python make_posters.py . --exclude-folders Samples,Extras
-
-# Set language for TMDb results
-python make_posters.py Movies --lang en-US
-```
-
-### Filename patterns recognized
-
-- Movies:  
-  - `Title (2010).mp4`  
-  - `Title [2010].mkv`  
-  - Or place files in a folder that contains `(2010)` or `[2010]` in its name
-
-- TV Episodes:  
-  - `Show.Name.S01E02.ext`  
-  - `Show Name - S01E02.ext`  
-  - Flexible separators supported
-
-### Example workflows
-
-**Generate all movie posters:**
-```bash
-cd SD_Card_Template
-python make_posters.py Movies
-```
-
-**Generate episode posters for one show:**
-```bash
-python make_posters.py "SD_Card_Template/Shows/Girls Last Tour/Season 01"
-```
-
-**One-shot pass for Movies + Shows:**
-```bash
-python make_posters.py SD_Card_Template --only-folders Movies,Shows
-```
-
-**Sanity check before running:**
-```bash
-python make_posters.py SD_Card_Template --dry-run
-```
-
-### Troubleshooting
-
-- **Missing dependencies:**  
-  Install with `python -m pip install pillow requests`
-
-- **Config error (no API key):**  
-  Ensure `make_posters.json` exists with your key
-
-- **No match errors:**  
-  Ensure filenames include a year or are placed in a folder with `(YYYY)` or `[YYYY]`
 
 ### Roadmap (Nomad integration)
 
