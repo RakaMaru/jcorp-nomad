@@ -1,6 +1,6 @@
 ============================================================
 File list for: C:\common\Arduino\jcorp-nomad
-Generated on : Sun 09/14/2025 12:25:59.08
+Generated on : Sat 09/20/2025 13:47:30.87
 Script       : gh-filelist.bat
 ============================================================
 
@@ -78,7 +78,6 @@ C:\common\Arduino\jcorp-nomad\docs\assets\ui_font_Font2.fcfg
 C:\common\Arduino\jcorp-nomad\docs\backup\waveshare_backup05.zip
 C:\common\Arduino\jcorp-nomad\docs\backup\waveshare_backup06.zip
 C:\common\Arduino\jcorp-nomad\firmware\JcorpNomadProject
-C:\common\Arduino\jcorp-nomad\firmware\totally_not_library_files_versions.tar.gz
 C:\common\Arduino\jcorp-nomad\firmware\JcorpNomadProject\.theia
 C:\common\Arduino\jcorp-nomad\firmware\JcorpNomadProject\boot_mode.h
 C:\common\Arduino\jcorp-nomad\firmware\JcorpNomadProject\CMakeLists.txt
@@ -199,4 +198,4 @@ C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show\S01Ep02 - 
 
 [TOTALS  (EXCLUDES .git)]
 Directories: 18
-Files      : 148
+Files      : 147
