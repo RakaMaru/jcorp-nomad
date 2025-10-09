@@ -1,82 +1,76 @@
 @echo off
-REM ------------------------------------------------------------
-REM gh-devreset.bat
-REM Reset local 'dev' branch to match 'origin/main', remove all
-REM untracked files/dirs, and force-push 'dev' to the remote.
-REM
-REM Usage:
-REM   gh-devreset.bat [pathToRepo]
-REM If no path is provided, the current directory is used.
-REM ------------------------------------------------------------
+setlocal enabledelayedexpansion
 
-setlocal ENABLEDELAYEDEXPANSION
+:: =========================
+:: Generic dev reset script
+:: - Works in any Git repo
+:: - Confirms with user
+:: - Detects main vs master
+:: =========================
 
-REM Determine repo path
-if "%~1"=="" (
-  set "REPO=%CD%"
-) else (
-  set "REPO=%~1"
-)
-
-REM Basic checks
-if not exist "%REPO%\." (
-  echo [ERROR] Repository path not found: "%REPO%"
+:: Verify Git is available
+git --version >nul 2>&1 || (
+  echo [ERROR] Git is not installed or not in PATH.
+  pause
   exit /b 1
 )
 
-if not exist "%REPO%\.git" (
-  echo [ERROR] Not a Git repository: "%REPO%"
+:: Verify we're inside a Git work tree
+git rev-parse --is-inside-work-tree >nul 2>&1 || (
+  echo [ERROR] This folder is not a Git repository.
+  pause
   exit /b 1
 )
 
-REM Check Git presence
-git --version >NUL 2>&1
-if errorlevel 1 (
-  echo [ERROR] Git is not installed or not on PATH.
+:: Remote to use (default: origin)
+set "REMOTE=origin"
+
+:: Detect base branch on remote: main or master
+set "BASE=main"
+git rev-parse --verify %REMOTE%/main >nul 2>&1 || set "BASE=master"
+git rev-parse --verify %REMOTE%/%BASE% >nul 2>&1 || (
+  echo [ERROR] Could not find %REMOTE%/main or %REMOTE%/master on this repo.
+  pause
   exit /b 1
 )
-
-pushd "%REPO%" >NUL 2>&1
 
 echo.
-echo [INFO] Repository: %REPO%
+echo [INFO] Repository: %cd%
+echo [INFO] Will reset local 'dev' branch to '%REMOTE%/%BASE%'.
+echo [INFO] This will permanently delete ALL untracked and ignored files/directories.
 echo.
+set /p CONFIRM="Type YES to continue or anything else to cancel: "
+if /I not "%CONFIRM%"=="YES" (
+  echo.
+  echo [CANCELLED] Operation aborted by user. No changes made.
+  echo.
+  pause
+  exit /b 0
+)
 
-echo [STEP] Fetching latest refs from origin...
-git fetch origin --prune
-if errorlevel 1 goto :error
+echo.
+echo [STEP] Fetching latest refs from %REMOTE%...
+git fetch %REMOTE%
 
-echo [STEP] Switching to 'dev' (create/reset from origin/main if needed)...
-git switch dev 2>NUL || git switch -C dev origin/main
-if errorlevel 1 goto :error
+echo [STEP] Switching to 'dev' (create from %REMOTE%/%BASE% if needed)...
+git checkout dev 2>nul || git checkout -b dev %REMOTE%/%BASE%
 
-echo [STEP] Hard-resetting 'dev' to 'origin/main'...
-git reset --hard origin/main
-if errorlevel 1 goto :error
+echo [STEP] Hard-resetting 'dev' to '%REMOTE%/%BASE%'...
+git reset --hard %REMOTE%/%BASE%
 
 echo [STEP] Cleaning untracked files and directories (including ignored)...
 git clean -xfd
-if errorlevel 1 goto :error
 
-echo [STEP] Force-pushing 'dev' to remote...
-git push origin dev --force
-if errorlevel 1 goto :error
+echo [STEP] Force-pushing 'dev' to remote '%REMOTE%'...
+git push %REMOTE% dev --force
 
 echo.
-echo [DONE] 'dev' is now in sync with 'origin/main' locally and on GitHub.
+echo [DONE] 'dev' is now in sync with '%REMOTE%/%BASE%' locally and on the remote.
 echo.
 
-echo [SUMMARY]
-git status -sb
-echo.
-git log --oneline --decorate -n 1
-echo.
+echo [SUMMARY - last 5 commits]
+git log --oneline -5 --graph --decorate
 
-popd >NUL 2>&1
-exit /b 0
-
-:error
 echo.
-echo [FAILED] An error occurred. See messages above.
-popd >NUL 2>&1
-exit /b 1
+pause
+endlocal
