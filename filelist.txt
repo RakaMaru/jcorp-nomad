@@ -1,12 +1,12 @@
 ============================================================
 File list for: C:\common\Arduino\jcorp-nomad
-Generated on : Sat 09/20/2025 13:47:30.87
+Generated on : Sat 08/22/2026 23:02:40.81
 Script       : gh-filelist.bat
 ============================================================
 
 [TREE /A]
 Folder PATH listing for volume OS
-Volume serial number is C2DB-DE38
+Volume serial number is 000000D0 C2DB:DE38
 C:.
 +---case
 +---docs
@@ -15,23 +15,26 @@ C:.
 +---firmware
 |   \---JcorpNomadProject
 |       \---.theia
-\---SD_Card_Template
-    +---assets
-    |   \---jqueryfiletree
-    |       \---images
-    +---Books
-    +---Files
-    +---Gallery
-    +---Movies
-    +---Music
-    \---Shows
-        \---Placeholder Show
++---SD_Card_Template
+|   +---assets
+|   |   \---jqueryfiletree
+|   |       \---images
+|   +---Books
+|   +---Files
+|   +---Gallery
+|   +---Movies
+|   +---Music
+|   \---Shows
+|       \---Placeholder Show
+\---Tests
+    \---DemoSwitcher
 
 ------------------------------------------------------------
 [FLAT LIST: dir /s /b  (EXCLUDES .git)]
 ------------------------------------------------------------
 C:\common\Arduino\jcorp-nomad\.gitattributes
 C:\common\Arduino\jcorp-nomad\.gitignore
+C:\common\Arduino\jcorp-nomad\AGENTS.md
 C:\common\Arduino\jcorp-nomad\case
 C:\common\Arduino\jcorp-nomad\docs
 C:\common\Arduino\jcorp-nomad\filelist.txt
@@ -40,12 +43,15 @@ C:\common\Arduino\jcorp-nomad\gh-dev-reset.bat
 C:\common\Arduino\jcorp-nomad\gh-dev-sync.bat
 C:\common\Arduino\jcorp-nomad\gh-dev-to-main-commit.bat
 C:\common\Arduino\jcorp-nomad\gh-filelist.bat
+C:\common\Arduino\jcorp-nomad\gh-set-user-RakaMaru.bat
+C:\common\Arduino\jcorp-nomad\gh-setup-user-RakaMaru.bat
 C:\common\Arduino\jcorp-nomad\LICENSE.md
 C:\common\Arduino\jcorp-nomad\main
 C:\common\Arduino\jcorp-nomad\README.md
 C:\common\Arduino\jcorp-nomad\Screenshot 2025-07-07 193521.png
 C:\common\Arduino\jcorp-nomad\Screenshot 2025-08-10 220031.png
 C:\common\Arduino\jcorp-nomad\SD_Card_Template
+C:\common\Arduino\jcorp-nomad\Tests
 C:\common\Arduino\jcorp-nomad\case\JcorpNomadBackCover.stl
 C:\common\Arduino\jcorp-nomad\case\JcorpNomadFrontCover.stl
 C:\common\Arduino\jcorp-nomad\case\NomadNewCase v16.stl
@@ -131,6 +137,7 @@ C:\common\Arduino\jcorp-nomad\SD_Card_Template\Movies
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\movies.html
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Music
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\music.html
+C:\common\Arduino\jcorp-nomad\SD_Card_Template\old_favicon.ico
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\placeholder.jpg
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\shows.html
@@ -195,7 +202,9 @@ C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show.jpg
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show\S01Ep01 - Pilot.mp4
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show\S01Ep02 - Episode 2.mp4
+C:\common\Arduino\jcorp-nomad\Tests\DemoSwitcher
+C:\common\Arduino\jcorp-nomad\Tests\DemoSwitcher\DemoSwitcher.ino
 
 [TOTALS  (EXCLUDES .git)]
-Directories: 18
-Files      : 147
+Directories: 20
+Files      : 152
