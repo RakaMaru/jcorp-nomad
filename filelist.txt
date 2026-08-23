@@ -1,6 +1,6 @@
 ============================================================
 File list for: C:\common\Arduino\jcorp-nomad
-Generated on : 2026-08-22 23:14:51
+Generated on : 2026-08-23 10:47:47
 Script       : gh-filelist.bat
 ============================================================
 
@@ -26,6 +26,8 @@ C:\common\Arduino\jcorp-nomad
 |   +---Music
 |   \---Shows
 |       \---Placeholder Show
++---skills
+|   \---decision-table
 \---Tests
     \---DemoSwitcher
 
@@ -203,10 +205,13 @@ C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show.jpg
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show\S01Ep01 - Pilot.mp4
 C:\common\Arduino\jcorp-nomad\SD_Card_Template\Shows\Placeholder Show\S01Ep02 - Episode 2.mp4
+C:\common\Arduino\jcorp-nomad\skills
+C:\common\Arduino\jcorp-nomad\skills\decision-table
+C:\common\Arduino\jcorp-nomad\skills\decision-table\SKILL.md
 C:\common\Arduino\jcorp-nomad\Tests
 C:\common\Arduino\jcorp-nomad\Tests\DemoSwitcher
 C:\common\Arduino\jcorp-nomad\Tests\DemoSwitcher\DemoSwitcher.ino
 
 [TOTALS  (excludes .git, .venv, venv, __pycache__, .idea, .vscode, mcps, node_modules, caches)]
-Directories: 21
-Files      : 153
+Directories: 23
+Files      : 154
