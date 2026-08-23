@@ -74,12 +74,12 @@ if /I "%PRCHOICE%"=="Y" (
 :done
 echo/
 echo ==================================================
-echo ✅ Done. You are now back on the DEV branch,
+echo Done. You are now back on the DEV branch,
 echo    synced with origin/main.
 echo ==================================================
 exit /b 0
 
 :fail
 echo/
-echo ❌ ERROR: a command failed. Aborting.
+echo ERROR: a command failed. Aborting.
 exit /b 1
