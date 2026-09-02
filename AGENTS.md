@@ -13,6 +13,7 @@ This repo is **public**. Do not put secrets or private issue links in commits.
 2. **[`README.md`](README.md)**
 3. GitHub **`RakaMaru`**. `gh auth switch -h github.com -u RakaMaru` if needed (do not run `gh-set-user-RakaMaru.bat`; it pauses).
 4. **Decision table** — [`skills/decision-table/SKILL.md`](skills/decision-table/SKILL.md).
+5. **Steps table** — [`skills/steps-table/SKILL.md`](skills/steps-table/SKILL.md). Pick with **let’s do N**.
 
 ---
 
@@ -38,6 +39,10 @@ GitHub **RakaMaru** / `RakaMaru/jcorp-nomad` (**public**). Commit **RakaMaru** /
 
 Decision tables: same four columns as RTTools.
 
+Steps tables: `#` · **Status** · **Step** · **Where**. New journey starts at 1. Pick with **let’s do 7**. Insert a missed gate and renumber the following rows.
+
+**“Do it”** on a lock is write + park + one-liner, not commit/promote.
+
 Issues: https://github.com/RakaMaru/jcorp-nomad/issues
 
 ---
@@ -48,3 +53,4 @@ Issues: https://github.com/RakaMaru/jcorp-nomad/issues
 |------|--------|
 | 2026-08-22 | First AGENTS.md (thin kit). |
 | 2026-08-23 | Process kit (RTTools#59). |
+| 2026-09-01 | Steps table skill; pick with **let’s do N**. “Do it” on a lock is write + park + one-liner. |
